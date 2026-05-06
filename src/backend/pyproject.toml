@@ -1,5 +1,5 @@
 [project]
-name = "fathom-asmt-api"
+name = "fathom-assessment-api"
 version = "0.1.0"
 description = "FastAPI service for Fathom assessment"
 readme = "README.md"

@@ -1,13 +1,10 @@
+from app.api import ship_routes
 from fastapi import FastAPI
 
-app = FastAPI(title="Fathom ASMT API", version="0.1.0")
+app = FastAPI(title="Fathom assessment API", version="0.1.0")
 
+@app.get("/health", summary="Health check")
+def health() -> dict[str, str]:
+    return {"status": "Healthy"}
 
-@app.get("/", summary="Health check")
-def root() -> dict[str, str]:
-    return {"message": "Fathom ASMT API is running"}
-
-
-@app.get("/ping", summary="Ping endpoint")
-def ping() -> dict[str, str]:
-    return {"status": "pong"}
+app.include_router(ship_routes.router, prefix="/ships", tags=["ships"])
