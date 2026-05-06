@@ -11,9 +11,14 @@ uv run fastapi dev app/main.py
 
 ## Migration
 
-### Add migration
+**Add migration**
 ```
 uv run alembic revision --autogenerate -m "<message>"
+```
+
+**Run migration**
+```
+uv run alembic upgrade head
 ```
 
 ## Test
