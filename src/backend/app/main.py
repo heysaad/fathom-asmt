@@ -13,12 +13,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/", summary="Root endpoint")
 def root() -> dict[str, str]:
     return {"app": settings.app_name, "version": settings.version}
 
+
 @app.get("/health", summary="Health check")
 def health() -> dict[str, str]:
     return {"status": "Healthy"}
+
 
 app.include_router(ship_routes.router, prefix="/ships", tags=["ships"])

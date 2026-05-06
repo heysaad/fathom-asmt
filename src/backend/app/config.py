@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # Database configuration
     # For SQLite: "sqlite:///./sql_app.db"
     # For Postgres: "postgresql://user:password@localhost/dbname"
-    database_url: str
+    database_url: str = ""
 
     allow_origins: str = "http://localhost:3000"
 

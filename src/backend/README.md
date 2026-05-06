@@ -6,12 +6,14 @@ This folder contains a FastAPI application for the Fathom assessment project.
 
 ```bash
 uv sync
+uv run fastapi dev app/main.py
 ```
 
-## Run
+## Migration
 
-```bash
-uv run fastapi dev app/main.py
+### Add migration
+```
+uv run alembic revision --autogenerate -m "<message>"
 ```
 
 ## Test
