@@ -5,7 +5,7 @@ description = "FastAPI service for Fathom assessment"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.111.0",
+    "fastapi[standard]>=0.111.0",
     "pydantic>=2.13.3",
     "uvicorn[standard]>=0.23.0",
 ]
@@ -14,7 +14,8 @@ dependencies = [
 requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.uv]
-scripts = {
-    dev = "fastapi dev app/main.py"
-}
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.0.3",
+]
