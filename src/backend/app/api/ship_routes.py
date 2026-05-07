@@ -115,3 +115,4 @@ class MaintainanceTaskDto(BaseModel):
 
 class CreateMaintainanceTaskResponse(BaseModel):
     id: str
+
