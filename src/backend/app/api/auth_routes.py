@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.infra.auth.users import auth_backend, current_active_user, fastapi_users
 
-import fastapi_users
 from fastapi_users import schemas
 
 from app.infra.data.models.User import User

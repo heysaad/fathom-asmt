@@ -1,4 +1,4 @@
-from app.infra.data.database import Base
+from app.infra.data.base import Base
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime

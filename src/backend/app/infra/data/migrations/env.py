@@ -7,7 +7,7 @@ from alembic import context
 import os
 import sys
 
-from app.infra.data.database import Base
+from app.infra.data.base import Base
 from app.infra.data.models import Ship
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))

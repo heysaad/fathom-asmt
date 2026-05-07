@@ -3,11 +3,11 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from uvicorn import Config
 
 from app.config import settings
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from alembic import command
 
-from app.infra.data.models.User import User
+from app.infra.data.base import Base
 
 # 1. Database URL
 # 'check_same_thread' is only needed for SQLite
@@ -19,10 +19,6 @@ engine = create_async_engine(
 )
 
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-class Base(DeclarativeBase):
-    """Base class for all ORM models."""
-    pass
 
 async def get_db():
     async with async_session() as session:
@@ -37,4 +33,5 @@ def run_migrations():
     command.upgrade(alembic_cfg, "head")
 
 async def get_user_db(session: AsyncSession = Depends(get_db)):
+    from app.infra.data.models.User import User
     yield SQLAlchemyUserDatabase(session, User)
