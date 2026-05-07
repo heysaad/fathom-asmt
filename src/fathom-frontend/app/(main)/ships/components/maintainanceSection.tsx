@@ -15,7 +15,7 @@ import {
   SearchIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MaintenanceRecord } from "../models";
 import {
   DropdownMenu,
@@ -25,38 +25,59 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import CreateMaintainanceTaskDialog from "../../maintainance/components/createMaintainanceTaskDialog";
+import apiClient from "@/app/lib/api-client";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export default function MaintainanceSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
+  const [data, setData] = useState<MaintenanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showDelete, setShowDelete] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  const handleDeleteClickd = (taskId: string) => {
+    setShowDelete(true);
+    setSelectedTaskId(taskId);
+  };
+
   const addTaskClicked = () => {
     setCreateOpen(true);
   };
-  const [data, setData] = useState<MaintenanceRecord[]>([
-    {
-      id: "1",
-      title: "Engine Check",
-      description: "Routine engine check to ensure optimal performance.",
-      type: "routine",
-      dueDate: "2024-01-15",
-      status: "completed",
-    },
-    {
-      id: "2",
-      title: "Hull Inspection",
-      description: "Inspect hull for any signs of damage or corrosion.",
-      type: "routine",
-      dueDate: "2024-02-20",
-      status: "scheduled",
-    },
-    {
-      id: "3",
-      title: "Navigation System Update",
-      description: "Upgrade navigation software to the latest version.",
-      type: "upgrade",
-      dueDate: "2024-03-10",
-      status: "in_progress",
-    },
-  ]);
+
+  const loadData = async () => {
+    setLoading(true);
+    const response = await apiClient.get<MaintenanceRecord[]>(
+      `/ships/${shipId}/maintainance-tasks`,
+    );
+    setData(response.data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [shipId]);
+
+  const onDelete = async () => {
+    if (!selectedTaskId) return;
+    await apiClient.delete(
+      `/ships/${shipId}/maintainance-tasks/${selectedTaskId}`,
+    );
+    setData((prev) => prev.filter((t) => t.id !== selectedTaskId));
+    toast.success("Task deleted successfully");
+    setShowDelete(false);
+    setSelectedTaskId(null);
+
+    await loadData();
+  };
 
   return (
     <div>
@@ -71,20 +92,17 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
           Add Task
         </Button>
       </div>
-      <CreateMaintainanceTaskDialog
-        shipId={shipId}
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-      />
-      <DataTable
-        columns={[
-          {
-            accessorKey: "title",
-            header: "Task",
-            cell: ({ row }) => (
-              <div className="flex gap-3">
-                <div
-                  className={`rounded-full h-6 w-1 bg-gray-100 mt-1 
+      {loading && <p className="py-10 text-center">Loading...</p>}
+      {!loading && (
+        <DataTable
+          columns={[
+            {
+              accessorKey: "title",
+              header: "Description",
+              cell: ({ row }) => (
+                <div className="flex gap-3">
+                  <div
+                    className={`rounded-full h-4 w-1 bg-gray-100 mt-1 
                     ${
                       row.original.status === "completed"
                         ? "bg-green-500"
@@ -92,81 +110,114 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                           ? "bg-yellow-500"
                           : "bg-orange-500"
                     }`}
-                ></div>
-                <div className="flex-1">
-                  {row.original.title}
-                  <div className="text-xs text-muted-foreground">
-                    {row.original.description}
+                  ></div>
+                  <div className="flex-1">
+                    {row.original.title}
+                    <div className="text-xs text-muted-foreground">
+                      {row.original.description}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ),
-          },
-          {
-            accessorKey: "type",
-            header: "Type",
-            cell: ({ row }) =>
-              row.original.type.charAt(0).toUpperCase() +
-              row.original.type.slice(1),
-          },
-          {
-            accessorKey: "dueDate",
-            header: "Due",
-          },
-          {
-            accessorKey: "status",
-            header: "Status",
-            cell: ({ row }) => {
-              const status = row.original.status;
-              let color = "gray";
-              if (status === "completed") color = "bg-green-100 text-green-800";
-              else if (status === "in_progress")
-                color = "bg-yellow-100 text-yellow-800";
-              else if (status === "scheduled")
-                color = "bg-orange-100 text-orange-800";
-              return (
-                <span className={`px-2 py-1 text-xs rounded-full ${color}`}>
-                  {status.replace("_", " ").toUpperCase()}
-                </span>
-              );
+              ),
             },
-          },
-          {
-            accessorKey: "actions",
-            header: "",
-            cell: ({ row }) => (
-              <div className="flex gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost">
-                      <EllipsisVerticalIcon className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-44" align="end">
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        <Edit2Icon className="size-3 mr-1" />
-                        Edit
-                      </DropdownMenuItem>
-                      {row.original.status !== "completed" && (
+            {
+              accessorKey: "type",
+              header: "Type",
+              cell: ({ row }) =>
+                row.original.type.charAt(0).toUpperCase() +
+                row.original.type.slice(1),
+            },
+            {
+              accessorKey: "dueDate",
+              header: "Due",
+            },
+            {
+              accessorKey: "status",
+              header: "Status",
+              cell: ({ row }) => {
+                const status = row.original.status;
+                let color = "gray";
+                if (status === "completed")
+                  color = "bg-green-100 text-green-800";
+                else if (status === "in_progress")
+                  color = "bg-yellow-100 text-yellow-800";
+                else if (status === "scheduled")
+                  color = "bg-orange-100 text-orange-800";
+                return (
+                  <span className={`px-2 py-1 text-xs rounded-full ${color}`}>
+                    {status.replace("_", " ").toUpperCase()}
+                  </span>
+                );
+              },
+            },
+            {
+              accessorKey: "actions",
+              header: "",
+              cell: ({ row }) => (
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost">
+                        <EllipsisVerticalIcon className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-44" align="end">
+                      <DropdownMenuGroup>
                         <DropdownMenuItem>
-                          <CheckCircleIcon className="size-3 mr-1" />
-                          Mark as Complete
+                          <Edit2Icon className="size-3 mr-1" />
+                          Edit
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem>
-                        <Trash2Icon className="size-3 mr-1" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ),
-          },
-        ]}
-        data={data}
+                        {row.original.status !== "completed" && (
+                          <DropdownMenuItem>
+                            <CheckCircleIcon className="size-3 mr-1" />
+                            Mark as Complete
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteClickd(row.original.id)}
+                        >
+                          <Trash2Icon className="size-3 mr-1" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ),
+            },
+          ]}
+          data={data}
+        />
+      )}
+
+      <CreateMaintainanceTaskDialog
+        shipId={shipId}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onSuccess={loadData}
       />
+
+      <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant={"destructive"}
+              onClick={onDelete}
+              disabled={!selectedTaskId}
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -7,19 +7,23 @@ import React, { use, useEffect } from "react";
 import apiClient from "@/app/lib/api-client";
 import { ShipVM } from "../models";
 
-export default function ShipPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ShipPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id: shipId } = use(params);
   const [ship, setShip] = React.useState<ShipVM | null>(null);
   const [loading, setLoading] = React.useState(true);
 
-  const loadData = async () => {
-    setLoading(true);
-    const response = (await apiClient.get<ShipVM>(`/ships/${shipId}`)).data;
-    setShip(response);
-    setLoading(false);
-  };
-
   useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const response = (await apiClient.get<ShipVM>(`/ships/${shipId}`)).data;
+      setShip(response);
+      setLoading(false);
+    };
+
     loadData();
   }, [shipId]);
 
@@ -43,9 +47,7 @@ export default function ShipPage({ params }: { params: Promise<{ id: string }> }
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{ship.imo}</span>
               <span>•</span>
-              <span className="text-sm text-muted-foreground">
-                {ship.type}
-              </span>
+              <span className="text-sm text-muted-foreground">{ship.type}</span>
             </div>
             <p className="text-sm mt-2">{ship.description}</p>
           </div>

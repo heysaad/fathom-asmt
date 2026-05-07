@@ -54,7 +54,10 @@ class MaintainanceTask(Base):
     )
     ship_id: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
-    description: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    # e.g. "routine", "repair", "inspection", "upgrade"
+    type: Mapped[str] = mapped_column(String, nullable=False)
     # pending, in_progress, completed
-    status: Mapped[str] = mapped_column(String, default="pending")
+    status: Mapped[str] = mapped_column(String, default="scheduled")
+    due_date: Mapped[datetime] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
