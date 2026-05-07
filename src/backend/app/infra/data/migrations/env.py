@@ -8,7 +8,8 @@ import os
 import sys
 
 from app.infra.data.base import Base
-from app.infra.data.models import Ship
+from app.infra.data.models.Ship import Ship
+from app.infra.data.models.User import User
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from app.config import settings
