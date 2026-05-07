@@ -130,4 +130,8 @@
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  .page-title{
+    @apply text-3xl font-bold tracking-tight;
+  }
 }
