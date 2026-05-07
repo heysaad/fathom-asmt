@@ -48,7 +48,6 @@ apiClient.interceptors.response.use(
       }
     }
 
-    console.log(error);
     ensureSuccess(error.response);
     return Promise.reject(error);
   }
