@@ -20,14 +20,15 @@ const CreateShipDialog = React.forwardRef<CreateShipDialogHandle, object>((_, re
     const modelSchema = z.object({
         name: z.string().min(1, "Name is required"),
         description: z.string().optional(),
-        imo: z.string().optional()
+        imo: z.string().optional(),
+        type: z.string().min(1, "Ship type is required"), // e.g. Bulk Carrier, Container Ship, etc.
     });
     type modelType = z.infer<typeof modelSchema>;
 
     const { 
         register, 
         handleSubmit, formState: { errors, isSubmitting }, reset 
-    } = useForm({ resolver: zodResolver(modelSchema) });
+    } = useForm<modelType>({ resolver: zodResolver(modelSchema) });
 
     React.useImperativeHandle(ref, () => ({
         show: () => {
@@ -51,32 +52,38 @@ const CreateShipDialog = React.forwardRef<CreateShipDialogHandle, object>((_, re
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-                    {JSON.stringify(errors)}
                     <Field>
                         <FieldLabel>Name</FieldLabel>
                         <Input placeholder="Enter ship name" {...register("name")} autoComplete="off" />
                         {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                     </Field>
-                    <Field>
-                        <FieldLabel>IMO Number</FieldLabel>
-                        <Input placeholder="Enter IMO number" {...register("imo")} autoComplete="off" />
-                        {errors.imo && <p className="text-sm text-red-500">{errors.imo.message}</p>}
-                    </Field>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field>
+                            <FieldLabel>Type</FieldLabel>
+                            <Input placeholder="Enter ship type" {...register("type")} autoComplete="off" />
+                            {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
+                        </Field>
+                        <Field>
+                            <FieldLabel>IMO Number</FieldLabel>
+                            <Input placeholder="Enter IMO number" {...register("imo")} autoComplete="off" />
+                            {errors.imo && <p className="text-sm text-red-500">{errors.imo.message}</p>}
+                        </Field>
+                    </div>
                     <Field>
                         <FieldLabel>Description</FieldLabel>
                         <Textarea placeholder="Enter description" {...register("description")} autoComplete="off" />
                         {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
                     </Field>
-                </form>
 
-                <DialogFooter>
-                    <Button variant={"secondary"} onClick={() => setOpen(false)} disabled={isSubmitting}>
-                        Cancel
-                    </Button>
-                    <Button type="submit" disabled={!!Object.keys(errors).length || isSubmitting}>
-                        {isSubmitting ? "Creating..." : "Create"}
-                    </Button>
-                </DialogFooter>
+                    <DialogFooter>
+                        <Button variant={"secondary"} onClick={() => setOpen(false)} disabled={isSubmitting}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={!!Object.keys(errors).length || isSubmitting}>
+                            {isSubmitting ? "Creating..." : "Create"}
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     )

@@ -3,18 +3,20 @@
 import apiClient from "@/app/lib/api-client"
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/datatable";
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { SearchIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import CreateShipDialog, { CreateShipDialogHandle } from "./components/createShipDialog";
+import { ShipVM } from "./models";
+import ShipImg from "./components/shipImg";
 
-export default () => {
-    const [ships, setShips] = React.useState<{ id: string, name: string, imo: string }[]>([]);
+export default function ShipsPage() {
+    const [ships, setShips] = React.useState<ShipVM[]>([]);
     const addRef = React.useRef<CreateShipDialogHandle>(null);
 
     const loadShips = async () => {
-        var data = await apiClient.get<{ id: string, name: string, imo: string }[]>("/ships");
+        const data = await apiClient.get<ShipVM[]>("/ships");
         setShips(data.data);
     }
 
@@ -46,11 +48,11 @@ export default () => {
                     header: "Name",
                     cell: ({ row }) =>
                         <Link href={`/ships/${row.original.id}`} className="flex items-center gap-2">
-                            <div className="bg-gray-100 rounded-lg size-10"></div>
+                            <ShipImg width={40} height={40} className="bg-gray-100 rounded-lg" id={row.original.id} />
                             <div>
                                 {row.original.name}
                                 <div className="text-xs text-muted-foreground">
-                                    IMO: {row.original.id}
+                                    {row.original.imo && `IMO: ${row.original.imo}`}
                                 </div>
                             </div>
                         </Link>

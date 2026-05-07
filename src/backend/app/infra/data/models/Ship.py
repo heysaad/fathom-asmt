@@ -15,7 +15,10 @@ class Ship(Base):
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False)
+    imo: Mapped[str] = mapped_column(String, nullable=True)
+    description: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+
 
 class CrewMember(Base):
     __tablename__ = "crew_members"
@@ -29,6 +32,7 @@ class CrewMember(Base):
     designation: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
 
+
 class ShipCrewAssignment(Base):
     __tablename__ = "ship_crew_assignments"
     id: Mapped[str] = mapped_column(
@@ -40,6 +44,7 @@ class ShipCrewAssignment(Base):
     crew_member_id: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
 
+
 class MaintainanceTask(Base):
     __tablename__ = "maintainance_tasks"
     id: Mapped[str] = mapped_column(
@@ -50,5 +55,6 @@ class MaintainanceTask(Base):
     ship_id: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
-    status: Mapped[str] = mapped_column(String, default="pending")  # pending, in_progress, completed
+    # pending, in_progress, completed
+    status: Mapped[str] = mapped_column(String, default="pending")
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
