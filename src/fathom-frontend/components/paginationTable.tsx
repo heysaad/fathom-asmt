@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import apiClient from "@/app/lib/api-client";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DataTable } from "./ui/datatable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Field, FieldLabel } from "./ui/field";
@@ -21,16 +21,21 @@ import {
   PaginationPrevious,
 } from "./ui/pagination";
 import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, SearchIcon } from "lucide-react";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 
 export function PaginationTable<TData, TValue>({
   url,
   columns,
   filters,
+  actions,
+  headerLeft,
 }: {
   url: string;
   columns: ColumnDef<TData, TValue>[];
   filters?: any;
+  actions?: React.ReactNode;
+  headerLeft?: React.ReactElement;
 }) {
   const {
     totalPages,
@@ -46,6 +51,8 @@ export function PaginationTable<TData, TValue>({
     pageSize,
     setPageSize,
     goToPage,
+    search,
+    setSearch,
   } = usePagination<TData>({ url: url });
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
@@ -69,6 +76,23 @@ export function PaginationTable<TData, TValue>({
       {loading && <div>Loading..</div>}
       {data && (
         <div className="relative">
+          <div className="flex justify-between gap-6 mb-4">
+            <div>{headerLeft}</div>
+            <div className="flex gap-3 items-center">
+              <InputGroup>
+                <InputGroupInput
+                  placeholder="Search.."
+                  value={search}
+                  onChange={(x) => setSearch(x.target.value)}
+                />
+                <InputGroupAddon>
+                  <SearchIcon className="size-4" />
+                </InputGroupAddon>
+              </InputGroup>
+              {actions}
+            </div>
+          </div>
+
           <DataTable columns={columns} data={data} />
 
           <div className="flex items-center justify-between gap-4 mt-4">
@@ -208,6 +232,7 @@ export function usePagination<T>({
     prevPage,
     hasNext,
     hasPrev,
+    search,
     setSearch,
     setFilters,
     setPageSize,
