@@ -29,7 +29,3 @@ router.include_router(
     prefix="/users",
     tags=["users"],
 )
-
-@router.get("/authenticated-route")
-async def authenticated_route(user: User = Depends(get_current_user)):
-    return {"message": f"Hello {user.email}!"}

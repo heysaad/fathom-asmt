@@ -44,7 +44,7 @@ export default function UsersPage() {
               <SearchIcon className="size-4" />
             </InputGroupAddon>
           </InputGroup>
-          <Button onClick={() => router.push("/admin/user/new")}>Add User</Button>
+          <Button onClick={() => router.push("/admin/users/new")}>Add User</Button>
         </div>
       </div>
 

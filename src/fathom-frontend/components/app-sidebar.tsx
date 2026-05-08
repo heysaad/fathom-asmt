@@ -13,19 +13,16 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import {
-  GalleryVerticalEndIcon,
-  AudioLinesIcon,
-  TerminalIcon,
   TerminalSquareIcon,
-  BotIcon,
-  BookOpenIcon,
-  Settings2Icon,
   FrameIcon,
   PieChartIcon,
   MapIcon,
   ShipIcon,
-  UserCogIcon,
   ShieldUserIcon,
+  ShipWheelIcon,
+  HomeIcon,
+  FlameIcon,
+  ListTodoIcon,
 } from "lucide-react";
 import { config } from "@/app/lib/config";
 import { useUser } from "@/app/lib/user-context";
@@ -39,16 +36,24 @@ const data = {
   },
   navMain: [
     {
-      title: "Modules",
-      url: "#",
-      icon: <TerminalSquareIcon />,
-      isActive: true,
-      items: [
-        {
-          title: "Ships",
-          url: "/ships",
-        },
-      ],
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: <HomeIcon />,
+    },
+    {
+      title: "Ships",
+      url: "/ships",
+      icon: <ShipWheelIcon />,
+    },
+    {
+      title: "Task",
+      url: "/tasks",
+      icon: <ListTodoIcon />
+    },
+    {
+      title: "Drills",
+      url: "/drills",
+      icon: <FlameIcon />
     },
     {
       title: "Admin",
@@ -58,11 +63,7 @@ const data = {
         {
           title: "Users",
           url: "/admin/users",
-        },
-        {
-          title: "Crew Members",
-          url: "/admin/crew",
-        },
+        }
       ],
     },
   ],

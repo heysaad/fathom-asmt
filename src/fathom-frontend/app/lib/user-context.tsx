@@ -9,6 +9,7 @@ export type UserInfo = {
   name?: string;
   is_active?: boolean;
   is_verified?: boolean;
+  role?: "crew" | "admin"
 };
 
 type UserContextType = {
