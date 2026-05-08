@@ -19,10 +19,7 @@ async def get_ship_routes(db=Depends(get_db)):
 @router.post("", summary="Create a ship")
 async def create_ship_route(req: CreateShipRequest, db=Depends(get_db)):
     ship = Ship(
-        name=req.name,
-        type="Container Ship",
-        imo=req.imo,
-        description=req.description
+        name=req.name, type="Container Ship", imo=req.imo, description=req.description
     )
     db.add(ship)
     await db.commit()
@@ -59,17 +56,22 @@ async def get_ship_details_route(ship_id: str, db=Depends(get_db)):
         return {"error": "Ship not found"}
     return TypeAdapter(ShipDto).validate_python(ship)
 
+
 # maintainance routes
 
 
-@router.post("/{ship_id}/maintainance-tasks", summary="Create a maintainance task for a ship")
-async def create_maintainance_task_route(ship_id: str, req: CreateMaintainanceTaskRequest, db=Depends(get_db)):
+@router.post(
+    "/{ship_id}/maintainance-tasks", summary="Create a maintainance task for a ship"
+)
+async def add_crew_route(
+    ship_id: str, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
+):
     task = MaintainanceTask(
         ship_id=ship_id,
         title=req.title,
         type=req.type,
         due_date=req.dueDate,
-        status="scheduled"
+        status="scheduled",
     )
     db.add(task)
     await db.commit()
@@ -77,21 +79,55 @@ async def create_maintainance_task_route(ship_id: str, req: CreateMaintainanceTa
     return CreateMaintainanceTaskResponse(id=task.id)
 
 
-@router.get("/{ship_id}/maintainance-tasks", summary="Get maintainance tasks for a ship")
+@router.get(
+    "/{ship_id}/maintainance-tasks", summary="Get maintainance tasks for a ship"
+)
 async def get_maintainance_tasks_route(ship_id: str, db=Depends(get_db)):
-    result = await db.execute(select(MaintainanceTask).where(MaintainanceTask.ship_id == ship_id).order_by(MaintainanceTask.created_at.desc()))
+    result = await db.execute(
+        select(MaintainanceTask)
+        .where(MaintainanceTask.ship_id == ship_id)
+        .order_by(MaintainanceTask.created_at.desc())
+    )
     tasks = result.scalars().all()
     return TypeAdapter(list[MaintainanceTaskDto]).validate_python(tasks)
 
-@router.delete("/{ship_id}/maintainance-tasks/{task_id}", summary="Delete a maintainance task")
-async def delete_maintainance_task_route(ship_id: str, task_id: str, db=Depends(get_db)):
-    result = await db.execute(select(MaintainanceTask).where(MaintainanceTask.id == task_id, MaintainanceTask.ship_id == ship_id))
+
+@router.delete(
+    "/{ship_id}/maintainance-tasks/{task_id}", summary="Delete a maintainance task"
+)
+async def delete_maintainance_task_route(
+    ship_id: str, task_id: str, db=Depends(get_db)
+):
+    result = await db.execute(
+        select(MaintainanceTask).where(
+            MaintainanceTask.id == task_id, MaintainanceTask.ship_id == ship_id
+        )
+    )
     task = result.scalar_one_or_none()
     if not task:
         return {"error": "Task not found"}
     await db.delete(task)
     await db.commit()
     return {"message": "Task deleted successfully"}
+
+
+# crew members
+@router.post("/{ship_id}/crew", summary="Create a maintainance task for a ship")
+async def add_crew_route(
+    ship_id: str, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
+):
+    task = MaintainanceTask(
+        ship_id=ship_id,
+        title=req.title,
+        type=req.type,
+        due_date=req.dueDate,
+        status="scheduled",
+    )
+    db.add(task)
+    await db.commit()
+    await db.refresh(task)
+    return CreateMaintainanceTaskResponse(id=task.id)
+
 
 class CreateMaintainanceTaskRequest(BaseModel):
     title: str
@@ -109,10 +145,13 @@ class MaintainanceTaskDto(BaseModel):
     type: str
     status: str
     dueDate: datetime | None = Field(
-        None, alias="due_date", serialization_alias="dueDate")
+        None, alias="due_date", serialization_alias="dueDate"
+    )
     created_at: datetime
+    assigned_to_id: str | None = Field(
+        None, alias="assigned_to_id", serialization_alias="assignedToId"
+    )
 
 
 class CreateMaintainanceTaskResponse(BaseModel):
     id: str
-

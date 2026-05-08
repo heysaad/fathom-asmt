@@ -12,6 +12,7 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { UserInput } from "@/components/user-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -36,15 +37,17 @@ export default function CreateMaintainanceTaskDialog({
     dueDate: z
       .string()
       .default(() => new Date().toISOString()),
+    assignedToId: z.string()
   });
   type modelType = z.infer<typeof modelSchema>;
 
-  const loadData = async () => {};
+  const loadData = async () => { };
 
   const {
     handleSubmit,
     register,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<modelType>({ resolver: zodResolver(modelSchema) });
 
@@ -75,18 +78,18 @@ export default function CreateMaintainanceTaskDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-          <Field>
-            <FieldLabel>Title</FieldLabel>
-            <Input
-              placeholder="Enter task title"
-              {...register("title")}
-              autoComplete="off"
-            />
-            {errors.title && (
-              <p className="text-sm text-red-500">{errors.title.message}</p>
-            )}
-          </Field>
           <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <FieldLabel>Title</FieldLabel>
+              <Input
+                placeholder="Enter task title"
+                {...register("title")}
+                autoComplete="off"
+              />
+              {errors.title && (
+                <p className="text-sm text-red-500">{errors.title.message}</p>
+              )}
+            </Field>
             <Field>
               <FieldLabel>Type</FieldLabel>
               <select
@@ -98,6 +101,13 @@ export default function CreateMaintainanceTaskDialog({
                 <option value="inspection">Inspection</option>
                 <option value="upgrade">Upgrade</option>
               </select>
+            </Field>
+            <Field>
+              <FieldLabel>Assigned To</FieldLabel>
+              <UserInput onValueChange={x => setValue("assignedToId", x)} />
+              {errors.assignedToId && (
+                <p className="text-sm text-red-500">{errors.assignedToId.message}</p>
+              )}
             </Field>
             <Field>
               <FieldLabel>Due Date</FieldLabel>

@@ -4,7 +4,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, EmailStr
 from pydantic import TypeAdapter
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.auth.role_checker import RoleChecker
@@ -101,3 +101,19 @@ async def delete_user_route(user_id: str, db: AsyncSession = Depends(get_db)):
     await db.delete(user)
     await db.commit()
     return {"message": "User deleted"}
+
+
+@router.post("/search", summary="Search user by text")
+async def search_users(q: str | None):
+    result = await db.execute(
+        select(User)
+        .where(
+            or_(
+                User.email.ilike(f"%{q}%"),
+                User.username.ilike(f"%{q}%")
+            )
+        )
+        .order_by(User.email)
+        .limit(10))
+    users = result.scalars().all()
+    return TypeAdapter(list[UserDto]).validate_python(users)

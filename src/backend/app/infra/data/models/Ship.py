@@ -9,9 +9,7 @@ from uuid import uuid4
 class Ship(Base):
     __tablename__ = "ships"
     id: Mapped[str] = mapped_column(
-        String,
-        primary_key=True,
-        default=lambda: str(uuid4())
+        String, primary_key=True, default=lambda: str(uuid4())
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
     type: Mapped[str] = mapped_column(String, nullable=False)
@@ -20,37 +18,19 @@ class Ship(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
 
 
-class CrewMember(Base):
-    __tablename__ = "crew_members"
-    id: Mapped[str] = mapped_column(
-        String,
-        primary_key=True,
-        default=lambda: str(uuid4())
-    )
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    email: Mapped[str] = mapped_column(String, nullable=True)
-    designation: Mapped[str] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
-
-
 class ShipCrewAssignment(Base):
     __tablename__ = "ship_crew_assignments"
     id: Mapped[str] = mapped_column(
-        String,
-        primary_key=True,
-        default=lambda: str(uuid4())
+        String, primary_key=True, default=lambda: str(uuid4())
     )
     ship_id: Mapped[str] = mapped_column(String, nullable=False)
     crew_member_id: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
 
-
 class MaintainanceTask(Base):
     __tablename__ = "maintainance_tasks"
     id: Mapped[str] = mapped_column(
-        String,
-        primary_key=True,
-        default=lambda: str(uuid4())
+        String, primary_key=True, default=lambda: str(uuid4())
     )
     ship_id: Mapped[str] = mapped_column(String, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
@@ -61,3 +41,4 @@ class MaintainanceTask(Base):
     status: Mapped[str] = mapped_column(String, default="scheduled")
     due_date: Mapped[datetime] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    assigned_to_id: Mapped[str] = mapped_column(String, nullable=True)
