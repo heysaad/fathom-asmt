@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FilterIcon } from "lucide-react";
 import { useState } from "react";
 
 export default function DrillsPage() {
@@ -24,12 +25,13 @@ export default function DrillsPage() {
         filters={filters}
         headerLeft={
           <div className="flex items-center gap-3">
+            <FilterIcon className="size-4 opacity-50" />
             <NativeSelect
               value={filters.status}
               onChange={(x) => setFilters({ ...filters, status: x.target.value })}
             >
               <NativeSelectOption value="">All</NativeSelectOption>
-              <NativeSelectOption value="pending">Pending</NativeSelectOption>
+              <NativeSelectOption value="scheduled">Scheduled</NativeSelectOption>
               <NativeSelectOption value="in_progress">In Progress</NativeSelectOption>
               <NativeSelectOption value="completed">Completed</NativeSelectOption>
             </NativeSelect>

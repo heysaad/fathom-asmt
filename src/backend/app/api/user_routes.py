@@ -36,10 +36,10 @@ class UserDto(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    name: str | None
-    email: str
-    designation: str | None
-    role: str
+    name: str | None = None
+    email: str | None = None
+    designation: str | None = None
+    role: str | None = None
 
 
 @router.get("", summary="Get users", dependencies=admin_only)

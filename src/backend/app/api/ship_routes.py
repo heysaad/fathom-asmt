@@ -2,9 +2,13 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
-from sqlalchemy import select
+from sqlalchemy import String, cast, select
 from app.infra.data.database import get_db
 from app.infra.data.models.Ship import MaintainanceTask, Ship
+from app.services.paginator import PaginationRequest, PaginationResponse, Paginator
+from app.api.tasks_routes import FilterVM, TaskDto
+from app.infra.data.models.User import User
+from app.api.user_routes import UserDto
 
 router = APIRouter()
 
@@ -58,12 +62,11 @@ async def get_ship_details_route(ship_id: str, db=Depends(get_db)):
 
 
 # maintainance routes
-
-
 @router.post(
-    "/{ship_id}/maintainance-tasks", summary="Create a maintainance task for a ship"
+    "/{ship_id}/maintainance-tasks",
+    summary="Create a maintainance task for a ship"
 )
-async def add_crew_route(
+async def add_task_route(
     ship_id: str, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
 ):
     task = MaintainanceTask(
@@ -72,6 +75,7 @@ async def add_crew_route(
         type=req.type,
         due_date=req.dueDate,
         status="scheduled",
+        assigned_to_id=req.assignedToId
     )
     db.add(task)
     await db.commit()
@@ -90,6 +94,34 @@ async def get_maintainance_tasks_route(ship_id: str, db=Depends(get_db)):
     )
     tasks = result.scalars().all()
     return TypeAdapter(list[MaintainanceTaskDto]).validate_python(tasks)
+
+
+@router.post("/{ship_id}/tasks-paginated")
+async def get_paginated_list(ship_id: str, req: PaginationRequest[FilterVM], paginator: Paginator = Depends()):
+    query = select(MaintainanceTask, User)\
+        .where(MaintainanceTask.ship_id == ship_id)\
+        .outerjoin(User, MaintainanceTask.assigned_to_id == cast(User.id, String))
+    filters = req.filters
+
+    if req.search:
+        query = query.where(MaintainanceTask.title.icontains(req.search))
+
+    if filters and filters.userId:
+        query = query.where(MaintainanceTask.assigned_to_id == filters.userId)
+
+    if filters and filters.status:
+        query = query.where(MaintainanceTask.status == filters.status)
+
+    paged = await paginator.get_paginated(req, query.order_by(MaintainanceTask.created_at.desc()))
+
+    data = []
+    for row in paged.data:
+        print(row._mapping)
+        data.append(TaskDto(
+            **row.MaintainanceTask.__dict__,
+            assignedTo=UserDto.model_validate(row.User) if row.User else None)
+        )
+    return PaginationResponse[TaskDto](total=paged.total, data=data)
 
 
 @router.delete(
@@ -113,7 +145,7 @@ async def delete_maintainance_task_route(
 
 # crew members
 @router.post("/{ship_id}/crew", summary="Create a maintainance task for a ship")
-async def add_crew_route(
+async def add_task_route(
     ship_id: str, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
 ):
     task = MaintainanceTask(
@@ -133,6 +165,7 @@ class CreateMaintainanceTaskRequest(BaseModel):
     title: str
     type: str
     dueDate: datetime | None
+    assignedToId: str | None
 
 
 class MaintainanceTaskDto(BaseModel):

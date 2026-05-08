@@ -16,7 +16,7 @@ class Paginator:
 
         data_query = query.offset(
             (req.page-1)*req.pageSize).limit(req.pageSize)
-        data = (await self.db.execute(data_query)).scalars().all()
+        data = (await self.db.execute(data_query)).all()
 
         return PaginationResponse[TData](total=total, data=data)
 
@@ -37,4 +37,3 @@ class PaginationResponse[TData](BaseModel):
             data=TypeAdapter(list[typ]).validate_python(self.data),
             total=self.total
         )
-        

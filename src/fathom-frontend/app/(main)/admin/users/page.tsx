@@ -54,13 +54,13 @@ export default function UsersPage() {
             accessorKey: "name",
             header: "Name",
             cell: ({ row }) => (
-              <Link href={`/admin/users/${row.original.id}`} className="font-medium flex items-center gap-3">
+              <Link href={`/admin/users/${row.original.id}`} className="flex items-center gap-3">
                 <Avatar>
                   <AvatarImage src={getAvatarUrl(row.original.name ?? row.original.email)} />
                 </Avatar>
                 <div className="flex-1">
-                  {row.original.name || row.original.email}
-                  <div className="text-sm">{row.original.email}</div>
+                  <div className="font-medium">{row.original.name || row.original.email}</div>
+                  <div className="text-xs">{row.original.email}</div>
                 </div>
               </Link>
             ),

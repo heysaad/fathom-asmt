@@ -1,3 +1,5 @@
+import { UserVM } from "../admin/users/models";
+
 export interface ShipVM {
     id: string;
     name: string;
@@ -14,4 +16,6 @@ export interface MaintenanceRecord {
     type: "routine" | "repair" | "inspection" | "upgrade";
     status: "scheduled" | "in_progress" | "completed";
     dueDate?: string;
+    assignedToId?: string
+    assignedTo?: UserVM
 }

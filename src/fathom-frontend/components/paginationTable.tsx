@@ -21,7 +21,7 @@ import {
   PaginationPrevious,
 } from "./ui/pagination";
 import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight, SearchIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, SearchIcon, AlertCircle, Loader2 } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 
 export function PaginationTable<TData, TValue>({
@@ -67,13 +67,26 @@ export function PaginationTable<TData, TValue>({
   };
 
   return (
-    <>
+    <div className="w-full relative">
       {error && (
-        <div className="flex items-center justify-center py-10 text-red-500">
-          {error}
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <AlertCircle className="size-8 text-red-500" />
+            <div>
+              <h3 className="font-semibold text-red-500">Error loading data</h3>
+              <p className="text-sm text-muted-foreground mt-1">{error}</p>
+            </div>
+          </div>
         </div>
       )}
-      {loading && <div>Loading..</div>}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm z-10">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="size-8 text-muted-foreground animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading data...</p>
+          </div>
+        </div>
+      )}
       {data && (
         <div className="relative">
           <div className="flex justify-between gap-6 mb-4">
@@ -162,7 +175,7 @@ export function PaginationTable<TData, TValue>({
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
