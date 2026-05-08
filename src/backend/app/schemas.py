@@ -1,12 +1,19 @@
 import uuid
+from typing import Literal
 
 from fastapi_users import schemas
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
-    pass
+    name: str | None = None
+    designation: str | None = None
+    role: Literal["admin", "crew"]
 
 class UserCreate(schemas.BaseUserCreate):
-    pass
+    name: str | None = None
+    designation: str | None = None
+    role: Literal["admin", "crew"] = "crew"
 
 class UserUpdate(schemas.BaseUserUpdate):
-    pass
+    name: str | None = None
+    designation: str | None = None
+    role: Literal["admin", "crew"] | None = None

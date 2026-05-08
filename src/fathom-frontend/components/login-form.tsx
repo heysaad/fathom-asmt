@@ -22,6 +22,7 @@ import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { useUser } from "@/app/lib/user-context";
 
 export function LoginForm({
   className,
@@ -36,6 +37,7 @@ export function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get('returnUrl') || '/';
+  const { refreshUser } = useUser();
 
   const {
     handleSubmit,
@@ -53,6 +55,7 @@ export function LoginForm({
       const { access_token } = response.data;
       localStorage.setItem("access_token", access_token);
       localStorage.setItem("token_timestamp", Date.now().toString());
+      refreshUser()
       router.push(returnUrl);
     } catch (error) {
       console.error("Login failed:", error);

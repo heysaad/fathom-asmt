@@ -30,6 +30,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     // Handle 401 Unauthorized errors
+    console.log('error', error.response);
+    
     if (error.response?.status === 401) {
       // Clear tokens and redirect to login with returnUrl
       localStorage.removeItem('access_token');

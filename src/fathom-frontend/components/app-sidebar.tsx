@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { config } from "@/app/lib/config";
 import { useUser } from "@/app/lib/user-context";
+import { getAvatarUrl } from "@/app/lib/helpers";
 
 const data = {
   user: {
@@ -54,6 +55,10 @@ const data = {
       url: "#",
       icon: <ShieldUserIcon />,
       items: [
+        {
+          title: "Users",
+          url: "/admin/users",
+        },
         {
           title: "Crew Members",
           url: "/admin/crew",
@@ -87,7 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? {
         name: user.name || user.email.split("@")[0],
         email: user.email,
-        avatar: `https://ui-avatars.com/api/?name=${user.email ?? 'User'}&background=random`,
+        avatar: getAvatarUrl(user.name ?? user.email),
       }
     : data.user;
 

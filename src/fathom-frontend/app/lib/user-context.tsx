@@ -24,10 +24,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return
+
     setLoading(true);
     try {
-      const response = await apiClient.get("/auth/users/me");
-      setUser(response.data as UserInfo);
+      const response = await apiClient.get<UserInfo>("/auth/users/me");
+      setUser(response.data);
     } catch (error) {
       console.error("Failed to load current user", error);
       setUser(null);
