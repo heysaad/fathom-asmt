@@ -14,14 +14,17 @@ export default function ShipImg({
     'ship1.png': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'],
     'ship2.png': ['m', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w'],
     'ship3.png': ['x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
-  }
-  const src = `/imgs/${Object.keys(map).find(key => map[key].includes(firstChar))}`;
+  } as Record<string, string[]>
+
+  const imgName = Object.keys(map).find(x=>map[x].includes(firstChar));
+  const src = `/imgs/${imgName}`;
 
   return (
     <Image
       width={width}
       height={height}
       src={src}
+      alt="Ship"
       className="rounded-lg size-32 border border-gray-100"
       {...props}
     />

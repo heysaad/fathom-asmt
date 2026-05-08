@@ -28,8 +28,8 @@ import {
   ShieldUserIcon,
 } from "lucide-react";
 import { config } from "@/app/lib/config";
+import { useUser } from "@/app/lib/user-context";
 
-// This is sample data.
 const data = {
   user: {
     name: "shadcn",
@@ -81,6 +81,16 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useUser();
+
+  const currentUser = user
+    ? {
+        name: user.name || user.email.split("@")[0],
+        email: user.email,
+        avatar: `https://ui-avatars.com/api/?name=${user.email ?? 'User'}&background=random`,
+      }
+    : data.user;
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -99,7 +109,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={currentUser} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
