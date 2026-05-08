@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import apiClient from "@/app/lib/api-client";
 import z from "zod";
 import { useForm } from "react-hook-form";
@@ -34,6 +34,8 @@ export function LoginForm({
   type modelType = z.infer<typeof modelSchema>;
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl') || '/';
 
   const {
     handleSubmit,
@@ -42,11 +44,16 @@ export function LoginForm({
   } = useForm({ resolver: zodResolver(modelSchema) });
   const onSubmit = async (data: modelType) => {
     try {
-      const response = await apiClient.post("/auth/jwt/login", data);
+      const params = new URLSearchParams();
+      params.append('username', data.username);
+      params.append('password', data.password);
+      const response = await apiClient.post("/auth/jwt/login", params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
       const { access_token } = response.data;
       localStorage.setItem("access_token", access_token);
       localStorage.setItem("token_timestamp", Date.now().toString());
-      router.push("/");
+      router.push(returnUrl);
     } catch (error) {
       console.error("Login failed:", error);
       toast.error('Invalid username or password')

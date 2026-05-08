@@ -31,10 +31,11 @@ apiClient.interceptors.response.use(
   async (error) => {
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
-      // Clear tokens and redirect to login
+      // Clear tokens and redirect to login with returnUrl
       localStorage.removeItem('access_token');
       localStorage.removeItem('token_timestamp');
-      window.location.href = '/auth/login';
+      const returnUrl = `${window.location.pathname}${window.location.search}`
+      window.location.href = `/auth/login?returnUrl=${encodeURIComponent(returnUrl)}`
       return Promise.reject(error);
     }
 
