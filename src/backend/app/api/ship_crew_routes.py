@@ -13,7 +13,7 @@ router = APIRouter()
 async def get_maintainance_tasks_route(ship_id: str, db=Depends(get_db)):
     result = await db.execute(
         select(ShipCrewAssignment)
-        .where(ShipCrewAssignment.ship_id == ship_id)
+        .where(ShipCrewAssignment.ship_id == ship_id and ShipCrewAssignment.is_active == True)
         .order_by(ShipCrewAssignment.created_at.desc())
     )
     data = result.scalars().all()

@@ -1,5 +1,5 @@
 from app.infra.data.base import Base
-from sqlalchemy import String
+from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 from typing import List
@@ -26,6 +26,8 @@ class ShipCrewAssignment(Base):
     ship_id: Mapped[str] = mapped_column(String, nullable=False)
     crew_member_id: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
+
 
 class MaintainanceTask(Base):
     __tablename__ = "maintainance_tasks"
