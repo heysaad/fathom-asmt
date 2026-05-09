@@ -19,3 +19,12 @@ export interface MaintenanceRecord {
     assignedToId?: string
     assignedTo?: UserVM
 }
+
+export interface ShipCrewAssignment {
+    id: string;
+    ship_id: string;
+    crew_member_id: string;
+    is_active: boolean;
+    created_at: string;
+    crew_member?: UserVM;
+}
