@@ -3,7 +3,7 @@ import logging
 
 from alembic import command
 
-from app.api import ship_routes
+from app.api import ship_routes, ship_crew_routes, drills_routes
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
@@ -46,6 +46,8 @@ def health() -> dict[str, str]:
 authorize = [Depends(get_current_user)]
 
 app.include_router(ship_routes.router, prefix="/ships", dependencies=authorize)
+app.include_router(ship_crew_routes.router, prefix="/ships", dependencies=authorize)
+app.include_router(drills_routes.router, prefix="/ships", dependencies=authorize)
 app.include_router(auth_routes.router, prefix="/auth")
 app.include_router(user_routes.router, prefix="/users", dependencies=authorize)
 app.include_router(tasks_routes.router, prefix="/tasks", dependencies=authorize)
