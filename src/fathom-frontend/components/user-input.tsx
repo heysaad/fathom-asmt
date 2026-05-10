@@ -12,8 +12,9 @@ export function UserInputItem(user: UserVM) {
                 <Avatar size="sm">
                     <AvatarImage src={getAvatarUrl(user.name ?? user.email)} />
                 </Avatar>
-                <div className="flex-1 text-left">
-                    <div>{user.name ?? user.email}</div>
+                <div className="flex-1 text-left flex gap-2 items-center">
+                    <div className="flex-1 max-w-32 truncate">{user.name ?? user.email}</div>
+                    {user.designation && <div className="text-xs text-muted-foreground">• {user.designation}</div>}
                 </div>
             </div>
         </SelectItem>

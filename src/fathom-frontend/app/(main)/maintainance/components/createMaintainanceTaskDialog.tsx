@@ -9,11 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UserInput } from "@/components/user-input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import moment from "moment";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -32,12 +33,12 @@ export default function CreateMaintainanceTaskDialog({
   const modelSchema = z.object({
     title: z.string().min(1, "Title is required"),
     type: z
-      .enum(["routine", "repair", "inspection", "upgrade"])
+      .enum(["routine", "repair", "inspection", "upgrade"], 'Invalid value')
       .default("routine"),
     dueDate: z
-      .string()
-      .default(() => new Date().toISOString()),
-    assignedToId: z.string()
+      .iso.date('Invalid date')
+      .default(() => moment(new Date()).add(3, 'd').format('YYYY-MM-DD')),
+    assignedToId: z.guid('Please select user')
   });
   type modelType = z.infer<typeof modelSchema>;
 
@@ -105,13 +106,12 @@ export default function CreateMaintainanceTaskDialog({
             <Field>
               <FieldLabel>Assigned To</FieldLabel>
               <UserInput onValueChange={x => setValue("assignedToId", x)} />
-              {errors.assignedToId && (
-                <p className="text-sm text-red-500">{errors.assignedToId.message}</p>
-              )}
+              {errors.assignedToId && (<FieldError errors={[errors.assignedToId]} />)}
             </Field>
             <Field>
               <FieldLabel>Due Date</FieldLabel>
               <Input type="date" {...register("dueDate")} autoComplete="off" />
+              {errors.dueDate && (<FieldError errors={[errors.dueDate]} />)}
             </Field>
           </div>
           <DialogFooter className="pt-2">

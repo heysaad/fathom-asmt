@@ -11,7 +11,8 @@ from app.infra.auth.role_checker import RoleChecker
 from app.infra.auth.users import UserManager, get_user_manager
 from app.infra.data.database import get_db
 from app.infra.data.models.User import User
-from app.schemas import UserCreate, UserUpdate
+from app.schemas.common import UserDto
+from app.schemas.schemas import UserCreate, UserUpdate
 
 router = APIRouter()
 
@@ -30,16 +31,6 @@ class UserUpdateRequest(BaseModel):
     email: EmailStr | None = None
     designation: str | None = None
     role: Literal["admin", "crew"] | None = None
-
-
-class UserDto(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str | None = None
-    email: str | None = None
-    designation: str | None = None
-    role: str | None = None
 
 
 @router.get("", summary="Get users", dependencies=admin_only)

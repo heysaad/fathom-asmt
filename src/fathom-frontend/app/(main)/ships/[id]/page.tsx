@@ -2,10 +2,12 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import MaintainanceSection from "../components/maintainanceTab";
+import MaintainanceSection from "../components/tasksTab";
 import React, { use, useEffect } from "react";
 import apiClient from "@/app/lib/api-client";
 import { ShipVM } from "../models";
+import CrewTab from "../components/crewTab";
+import DrillsTab from "../components/drillsTab";
 
 export default function ShipPage({
   params,
@@ -57,7 +59,8 @@ export default function ShipPage({
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="maintainance">Maintainance</TabsTrigger>
-            <TabsTrigger value="safety-crew">Safety & Crew</TabsTrigger>
+            <TabsTrigger value="safety-crew">Crew Members</TabsTrigger>
+            <TabsTrigger value="drills">Safety Drills</TabsTrigger>
             <TabsTrigger value="compliance">Compliance & Audits</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
@@ -66,8 +69,11 @@ export default function ShipPage({
           <TabsContent value="maintainance">
             <MaintainanceSection shipId={shipId} />
           </TabsContent>
+          <TabsContent value="drills">
+            <DrillsTab shipId={shipId} />
+          </TabsContent>
           <TabsContent value="safety-crew">
-            <p>Safety & Crew content goes here.</p>
+            <CrewTab shipId={shipId} />
           </TabsContent>
           <TabsContent value="compliance">
             <p>Compliance & Audits content goes here.</p>

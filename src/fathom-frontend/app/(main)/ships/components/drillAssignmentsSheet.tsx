@@ -2,6 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -21,25 +28,40 @@ import {
   Edit2Icon,
   EllipsisVerticalIcon,
   Trash2Icon,
+  CheckCircleIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ShipCrewAssignment } from "../models";
+import { useState } from "react";
+import { Drill, DrillAssignment } from "../models";
 import apiClient from "@/app/lib/api-client";
 import { toast } from "sonner";
 import { PaginationTable } from "@/components/paginationTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/app/lib/helpers";
-import { DateFormat } from "@/components/libs/moment";
-import CreateCrewDialog from "./createCrewDialog";
-import EditCrewDialog from "./editCrewDialog";
+import AddCrewToDrillDialog from "./addCrewToDrillDialog";
+import EditDrillAssignmentDialog from "./editDrillAssignmentDialog";
+import { UserBadge, UserBadgeSm } from "@/components/app/userBadge";
 
-export default function CrewSection({ shipId }: { shipId: string }) {
-  const [createOpen, setCreateOpen] = useState(false);
+interface DrillAssignmentsSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  drill: Drill;
+  shipId: string;
+  onRefresh: () => void;
+}
+
+export default function DrillAssignmentsSheet({
+  open,
+  onOpenChange,
+  drill,
+  shipId,
+  onRefresh,
+}: DrillAssignmentsSheetProps) {
+  const [addCrewOpen, setAddCrewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<ShipCrewAssignment | undefined>();
+  const [selectedAssignment, setSelectedAssignment] = useState<DrillAssignment | undefined>();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleDeleteClicked = (assignmentId: string) => {
@@ -47,22 +69,18 @@ export default function CrewSection({ shipId }: { shipId: string }) {
     setSelectedAssignmentId(assignmentId);
   };
 
-  const handleEditClicked = (assignment: ShipCrewAssignment) => {
+  const handleEditClicked = (assignment: DrillAssignment) => {
     setSelectedAssignment(assignment);
     setEditOpen(true);
-  };
-
-  const addCrewClicked = () => {
-    setCreateOpen(true);
   };
 
   const onDelete = async () => {
     if (!selectedAssignmentId) return;
     try {
       await apiClient.delete(
-        `/ships/${shipId}/crew/${selectedAssignmentId}`
+        `/ships/${shipId}/drills/${drill.id}/assignments/${selectedAssignmentId}`
       );
-      toast.success("Crew member removed successfully");
+      toast.success("Crew member removed from drill");
       setShowDelete(false);
       setSelectedAssignmentId(null);
       setRefreshKey((prev) => prev + 1);
@@ -75,72 +93,29 @@ export default function CrewSection({ shipId }: { shipId: string }) {
     setRefreshKey((prev) => prev + 1);
   };
 
-  const columns: ColumnDef<ShipCrewAssignment>[] = [
+  const columns: ColumnDef<DrillAssignment>[] = [
     {
-      accessorKey: "crew_member",
+      accessorKey: "",
       header: "Crew Member",
       cell: ({ row }) => (
-        <>
-          {row.original.crew_member && (
-            <div className="flex gap-2 items-center">
-              <Avatar
-                title={row.original.crew_member.name ?? ""}
-              >
-                <AvatarImage
-                  src={getAvatarUrl(
-                    row.original.crew_member?.name ??
-                      row.original.crew_member?.email
-                  )}
-                />
-              </Avatar>
-              <div className="text-sm">
-                <div className="font-medium">
-                  {row.original.crew_member.name || "Unnamed"}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {row.original.crew_member.email}
-                </div>
-              </div>
-            </div>
-          )}
-        </>
+        <div className="text-sm">
+          {row.original.ship_crew_assignment?.crew_member && <UserBadgeSm data={row.original.ship_crew_assignment.crew_member} />}
+          {row.original.remarks}
+        </div>
       ),
     },
     {
-      accessorKey: "crew_member.designation",
-      header: "Designation",
+      accessorKey: "is_attended",
+      header: "Attended",
       cell: ({ row }) => (
-        <span className="text-sm">
-          {row.original.crew_member?.designation || "-"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "is_active",
-      header: "Status",
-      cell: ({ row }) => {
-        const isActive = row.original.is_active;
-        return (
-          <span
-            className={`px-2 py-1 text-xs rounded-full ${
-              isActive
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${row.original.is_attended
+            ? "bg-green-100 text-green-800"
+            : "bg-gray-100 text-gray-800"
             }`}
-          >
-            {isActive ? "Active" : "Inactive"}
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: "created_at",
-      header: "Assigned On",
-      cell: ({ row }) => (
-        <DateFormat
-          date={row.original.created_at}
-          format="DD MMM YYYY"
-        />
+        >
+          {row.original.is_attended ? "Yes" : "No"}
+        </span>
       ),
     },
     {
@@ -177,40 +152,59 @@ export default function CrewSection({ shipId }: { shipId: string }) {
   ];
 
   return (
-    <div>
-      <PaginationTable
-        key={refreshKey}
-        url={`/ships/${shipId}/crew/list`}
-        actions={
-          <Button type="button" onClick={addCrewClicked}>
-            Add Crew Member
-          </Button>
-        }
-        columns={columns}
-      />
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="w-full sm:w-3/4 md:w-2/3">
+          <SheetHeader>
+            <SheetTitle>Drill Assignments</SheetTitle>
+            <SheetDescription>
+              Manage crew assignments for {drill.title || drill.type}
+            </SheetDescription>
+          </SheetHeader>
 
-      <CreateCrewDialog
+          <div className="mt-6">
+            <PaginationTable
+              key={refreshKey}
+              url={`/ships/${shipId}/drills/${drill.id}/assignments/list`}
+              actions={
+                <Button
+                  type="button"
+                  onClick={() => setAddCrewOpen(true)}
+                  size="sm"
+                >
+                  Add Crew
+                </Button>
+              }
+              columns={columns}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <AddCrewToDrillDialog
         shipId={shipId}
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        drillId={drill.id}
+        open={addCrewOpen}
+        onOpenChange={setAddCrewOpen}
         onSuccess={handleRefresh}
       />
 
-      <EditCrewDialog
+      <EditDrillAssignmentDialog
         data={selectedAssignment}
         open={editOpen}
         setOpen={setEditOpen}
         shipId={shipId}
+        drillId={drill.id}
         onSave={handleRefresh}
       />
 
       <AlertDialog open={showDelete} onOpenChange={setShowDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogTitle>Remove from drill?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will remove the crew member
-              from this ship.
+              This action cannot be undone. The crew member will be removed from
+              this drill.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -225,6 +219,6 @@ export default function CrewSection({ shipId }: { shipId: string }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

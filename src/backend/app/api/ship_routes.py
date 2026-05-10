@@ -1,17 +1,19 @@
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from sqlalchemy import String, cast, select
+from sqlalchemy.orm import selectinload
 from app.infra.data.database import get_db
 from app.infra.data.models.Ship import MaintainanceTask, Ship
 from app.services.paginator import PaginationRequest, PaginationResponse, Paginator
 from app.api.tasks_routes import FilterVM, TaskDto
 from app.infra.data.models.User import User
 from app.api.user_routes import UserDto
+from app.schemas.common import ShipDto
 
 router = APIRouter()
-
 
 @router.get("", summary="Get ships")
 async def get_ship_routes(db=Depends(get_db)):
@@ -23,7 +25,10 @@ async def get_ship_routes(db=Depends(get_db)):
 @router.post("", summary="Create a ship")
 async def create_ship_route(req: CreateShipRequest, db=Depends(get_db)):
     ship = Ship(
-        name=req.name, type="Container Ship", imo=req.imo, description=req.description
+        name=req.name, 
+        type="Container Ship", 
+        imo=req.imo, 
+        description=req.description
     )
     db.add(ship)
     await db.commit()
@@ -38,18 +43,7 @@ class CreateShipRequest(BaseModel):
 
 
 class CreateShipResponse(BaseModel):
-    id: str
-
-
-class ShipDto(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
-    name: str
-    imo: str | None
-    description: str | None
-    type: str
-    created_at: datetime
+    id: UUID
 
 
 @router.get("/{ship_id}", summary="Get ship details")
@@ -67,7 +61,7 @@ async def get_ship_details_route(ship_id: str, db=Depends(get_db)):
     summary="Create a maintainance task for a ship"
 )
 async def add_task_route(
-    ship_id: str, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
+    ship_id: UUID, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
 ):
     task = MaintainanceTask(
         ship_id=ship_id,
@@ -86,7 +80,7 @@ async def add_task_route(
 @router.get(
     "/{ship_id}/maintainance-tasks", summary="Get maintainance tasks for a ship"
 )
-async def get_maintainance_tasks_route(ship_id: str, db=Depends(get_db)):
+async def get_maintainance_tasks_route(ship_id: UUID, db=Depends(get_db)):
     result = await db.execute(
         select(MaintainanceTask)
         .where(MaintainanceTask.ship_id == ship_id)
@@ -97,12 +91,12 @@ async def get_maintainance_tasks_route(ship_id: str, db=Depends(get_db)):
 
 
 @router.post("/{ship_id}/tasks-paginated")
-async def get_paginated_list(ship_id: str, req: PaginationRequest[FilterVM], paginator: Paginator = Depends()):
-    query = select(MaintainanceTask, User)\
+async def get_paginated_list(ship_id: UUID, req: PaginationRequest[FilterVM], paginator: Paginator = Depends()):
+    query = select(MaintainanceTask)\
         .where(MaintainanceTask.ship_id == ship_id)\
-        .outerjoin(User, MaintainanceTask.assigned_to_id == cast(User.id, String))
-    filters = req.filters
+        .options(selectinload(MaintainanceTask.assigned_to))
 
+    filters = req.filters
     if req.search:
         query = query.where(MaintainanceTask.title.icontains(req.search))
 
@@ -113,15 +107,7 @@ async def get_paginated_list(ship_id: str, req: PaginationRequest[FilterVM], pag
         query = query.where(MaintainanceTask.status == filters.status)
 
     paged = await paginator.get_paginated(req, query.order_by(MaintainanceTask.created_at.desc()))
-
-    data = []
-    for row in paged.data:
-        print(row._mapping)
-        data.append(TaskDto(
-            **row.MaintainanceTask.__dict__,
-            assignedTo=UserDto.model_validate(row.User) if row.User else None)
-        )
-    return PaginationResponse[TaskDto](total=paged.total, data=data)
+    return paged.to_dto(TaskDto)
 
 
 @router.delete(
@@ -142,25 +128,6 @@ async def delete_maintainance_task_route(
     await db.commit()
     return {"message": "Task deleted successfully"}
 
-
-# crew members
-@router.post("/{ship_id}/crew", summary="Create a maintainance task for a ship")
-async def add_task_route(
-    ship_id: str, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
-):
-    task = MaintainanceTask(
-        ship_id=ship_id,
-        title=req.title,
-        type=req.type,
-        due_date=req.dueDate,
-        status="scheduled",
-    )
-    db.add(task)
-    await db.commit()
-    await db.refresh(task)
-    return CreateMaintainanceTaskResponse(id=task.id)
-
-
 class CreateMaintainanceTaskRequest(BaseModel):
     title: str
     type: str
@@ -171,8 +138,8 @@ class CreateMaintainanceTaskRequest(BaseModel):
 class MaintainanceTaskDto(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
-    ship_id: str
+    id: UUID
+    ship_id: UUID
     title: str
     description: str | None
     type: str
@@ -181,10 +148,10 @@ class MaintainanceTaskDto(BaseModel):
         None, alias="due_date", serialization_alias="dueDate"
     )
     created_at: datetime
-    assigned_to_id: str | None = Field(
+    assigned_to_id: UUID | None = Field(
         None, alias="assigned_to_id", serialization_alias="assignedToId"
     )
 
 
 class CreateMaintainanceTaskResponse(BaseModel):
-    id: str
+    id: UUID
