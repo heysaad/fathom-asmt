@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select, and_
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload
 from datetime import datetime
 
 from app.infra.data.database import get_db
@@ -14,27 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.user_routes import UserDto
 from app.infra.data.models.User import User
+from app.infra.auth.users import get_current_user
+from app.schemas.common import DrillDto, ShipDto
+from app.api.ship_drill_assignment_routes import DrillAssignmentDto
 
 router = APIRouter()
 
 
 # ==================== DTOs ====================
-
-
-class DrillDto(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    ship_id: UUID
-    type: str
-    title: str | None
-    scheduled_at: datetime
-    started_at: datetime | None
-    completed_at: datetime | None
-    status: str
-    notes: str | None
-    created_by: str | None
-    created_at: datetime
 
 
 class CreateDrillDto(BaseModel):
@@ -45,6 +32,7 @@ class CreateDrillDto(BaseModel):
 
 
 class UpdateDrillDto(BaseModel):
+    ship_id: UUID
     title: str | None = None
     scheduled_at: datetime | None = None
     status: str | None = None
@@ -53,11 +41,9 @@ class UpdateDrillDto(BaseModel):
     notes: str | None = None
 
 
-
 class FilterVM(BaseModel):
     status: str | None = None
     drill_type: str | None = None
-
 
 
 # ==================== DRILL ENDPOINTS ====================
@@ -84,12 +70,12 @@ async def create_drill_route(ship_id: str, payload: CreateDrillDto, db=Depends(g
 
 
 @router.post(
-    "/drills/list",
+    "/drills/my-drills",
     summary="Get drills with pagination",
-    response_model=PaginationResponse[DrillDto],
+    response_model=PaginationResponse[DrillAssignmentDto],
 )
-async def get_drills_route(
-    req: PaginationRequest[FilterVM], db=Depends(get_db)
+async def get_my_drills_route(
+    req: PaginationRequest[FilterVM], db=Depends(get_db), user: User = Depends(get_current_user)
 ):
     """Get paginated list of drills for a ship"""
 
@@ -101,18 +87,28 @@ async def get_drills_route(
     if req.filters and req.filters.drill_type:
         filters.append(Drill.type == req.filters.drill_type)
 
-    query = select(Drill).where(and_(*filters)).order_by(Drill.scheduled_at.desc())
+    query = select(DrillAssignment)\
+        .join(DrillAssignment.drill)\
+        .options(
+            contains_eager(DrillAssignment.drill)
+                .joinedload(Drill.ship)
+        )\
+        .where(
+            DrillAssignment.ship_crew_assignment.has(
+                user.id == ShipCrewAssignment.crew_member_id))\
+        .where(and_(*filters)).order_by(Drill.scheduled_at.desc())
 
     paginator = Paginator(db)
     result = await paginator.get_paginated(req, query)
-    return result.to_dto(DrillDto)
+    return result.to_dto(DrillAssignmentDto)
+
 
 @router.post(
     "/ships/{ship_id}/drills/list",
     summary="Get drills with pagination",
     response_model=PaginationResponse[DrillDto],
 )
-async def get_drills_route(
+async def get_my_drills_route(
     ship_id: UUID, req: PaginationRequest[FilterVM], db=Depends(get_db)
 ):
     """Get paginated list of drills for a ship"""
@@ -125,7 +121,8 @@ async def get_drills_route(
     if req.filters and req.filters.drill_type:
         filters.append(Drill.type == req.filters.drill_type)
 
-    query = select(Drill).where(and_(*filters)).order_by(Drill.scheduled_at.desc())
+    query = select(Drill).where(
+        and_(*filters)).order_by(Drill.scheduled_at.desc())
 
     paginator = Paginator(db)
     result = await paginator.get_paginated(req, query)
@@ -154,16 +151,15 @@ async def get_drill_route(ship_id: str, drill_id: str, db=Depends(get_db)):
     return DrillDto.model_validate(drill)
 
 
-@router.put(
-    "/ships/{ship_id}/drills/{drill_id}", summary="Update drill", response_model=DrillDto
-)
+@router.put("/drills/{drill_id}", summary="Update drill", response_model=DrillDto)
 async def update_drill_route(
-    ship_id: str, drill_id: str, payload: UpdateDrillDto, db=Depends(get_db)
+    drill_id: str, payload: UpdateDrillDto, db=Depends(get_db)
 ):
     """Update a drill"""
 
     result = await db.execute(
-        select(Drill).where(and_(Drill.id == drill_id, Drill.ship_id == ship_id))
+        select(Drill).where(
+            and_(Drill.id == drill_id, Drill.ship_id == payload.ship_id))
     )
 
     drill = result.scalar_one_or_none()
@@ -177,16 +173,16 @@ async def update_drill_route(
         drill.title = payload.title
 
     if payload.scheduled_at is not None:
-        drill.scheduled_at = datetime.fromisoformat(payload.scheduled_at)
+        drill.scheduled_at = payload.scheduled_at
 
     if payload.status is not None:
         drill.status = payload.status
 
     if payload.started_at is not None:
-        drill.started_at = datetime.fromisoformat(payload.started_at)
+        drill.started_at = payload.started_at
 
     if payload.completed_at is not None:
-        drill.completed_at = datetime.fromisoformat(payload.completed_at)
+        drill.completed_at = payload.completed_at
 
     if payload.notes is not None:
         drill.notes = payload.notes

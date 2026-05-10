@@ -74,7 +74,8 @@ export default function EditDrillDialog({
 
     setLoading(true);
     try {
-      await apiClient.put(`/ships/${shipId}/drills/${data.id}`, {
+      await apiClient.put(`/drills/${data.id}`, {
+        ship_id: shipId,
         title: title || null,
         status,
         scheduled_at: scheduledAt,

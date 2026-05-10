@@ -99,7 +99,7 @@ export default function DrillAssignmentsSheet({
       header: "Crew Member",
       cell: ({ row }) => (
         <div className="text-sm">
-          {row.original.crew_member && <UserBadgeSm data={row.original.crew_member} />}
+          {row.original.ship_crew_assignment?.crew_member && <UserBadgeSm data={row.original.ship_crew_assignment.crew_member} />}
           {row.original.remarks}
         </div>
       ),

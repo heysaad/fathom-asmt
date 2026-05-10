@@ -33,6 +33,7 @@ export interface ShipCrewAssignment {
 export interface Drill {
     id: string;
     ship_id: string;
+    ship?: ShipVM;
     type: "fire_drill" | "evacuation" | "man_overboard";
     title?: string;
     scheduled_at: string;
@@ -47,11 +48,12 @@ export interface Drill {
 export interface DrillAssignment {
     id: string;
     drill_id: string;
+    drill?: Drill;
     ship_crew_assignment_id: string;
+    ship_crew_assignment?: ShipCrewAssignment;
     assigned_at: string;
     is_attended: boolean;
     is_completed: boolean;
     attended_at?: string;
     remarks?: string;
-    crew_member?: UserVM
 }

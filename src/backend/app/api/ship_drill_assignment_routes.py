@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select, and_
-from sqlalchemy.orm import contains_eager
+from sqlalchemy.orm import contains_eager, joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -11,6 +11,8 @@ from app.api.user_routes import UserDto
 from app.infra.data.models.Ship import Drill, DrillAssignment, ShipCrewAssignment
 from app.services.paginator import PaginationRequest, PaginationResponse, Paginator
 from app.infra.data.database import get_db
+from app.schemas.common import DrillDto
+from app.api.ship_crew_routes import ShipCrewDto
 
 router = APIRouter()
 
@@ -20,12 +22,13 @@ class DrillAssignmentDto(BaseModel):
 
     id: UUID
     drill_id: UUID
+    drill: DrillDto | None = None
     assigned_at: datetime
     is_attended: bool
     is_completed: bool
-    attended_at: datetime | None
-    remarks: str | None
-    crew_member: Optional[UserDto] = None
+    attended_at: datetime | None = None
+    remarks: str | None = None
+    ship_crew_assignment: Optional[ShipCrewDto] = None
 
 
 class CreateDrillAssignmentDto(BaseModel):
@@ -38,8 +41,10 @@ class UpdateDrillAssignmentDto(BaseModel):
     attended_at: datetime | None = None
     remarks: str | None = None
 
+
 class AssignmentFilterVM(BaseModel):
     is_attended: bool
+
 
 @router.post(
     "/{ship_id}/drills/{drill_id}/assignments",
@@ -137,17 +142,16 @@ async def get_drill_assignments_route(
 
     query = (
         select(DrillAssignment)
-        .join(ShipCrewAssignment)
-        .options(contains_eager(DrillAssignment.ship_crew_assignment))
+        .options(
+            joinedload(DrillAssignment.ship_crew_assignment)
+                .joinedload(ShipCrewAssignment.crew_member)
+        )
         .where(and_(*filters))
         .order_by(DrillAssignment.assigned_at.desc())
     )
 
     paginator = Paginator(db)
     result = await paginator.get_paginated(req, query)
-    for x in result.data:
-        x.crew_member = x.ship_crew_assignment.crew_member
-
     return result.to_dto(DrillAssignmentDto)
 
 
