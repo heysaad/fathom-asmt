@@ -101,16 +101,6 @@ export default function EditDrillDialog({
         {data && (
           <form onSubmit={handleSave} className="space-y-3">
             <Field>
-              <FieldLabel>Drill Type</FieldLabel>
-              <div className="text-sm bg-muted p-2 rounded">
-                {
-                  DRILL_TYPES.find((t) => t.value === data.type)?.label ||
-                  data.type
-                }
-              </div>
-            </Field>
-
-            <Field>
               <FieldLabel>Title</FieldLabel>
               <Input
                 value={title}

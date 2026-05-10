@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import MaintainanceSection from "../components/maintainanceTab";
+import MaintainanceSection from "../components/tasksTab";
 import React, { use, useEffect } from "react";
 import apiClient from "@/app/lib/api-client";
 import { ShipVM } from "../models";

@@ -87,7 +87,7 @@ async def update_by_crew(
 
 class FilterVM(BaseModel):
     userId: UUID | None = None
-    status: UUID | None = None
+    status: str | None = None
 
 
 class TaskDto(BaseModel):

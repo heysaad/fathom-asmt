@@ -63,7 +63,7 @@ class FilterVM(BaseModel):
 # ==================== DRILL ENDPOINTS ====================
 
 
-@router.post("/{ship_id}/drills", summary="Create a drill", response_model=DrillDto)
+@router.post("/ships/{ship_id}/drills", summary="Create a drill", response_model=DrillDto)
 async def create_drill_route(ship_id: str, payload: CreateDrillDto, db=Depends(get_db)):
     """Create a new drill for a ship"""
 

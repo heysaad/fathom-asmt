@@ -15,7 +15,7 @@ import {
   SearchIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MaintenanceRecord } from "../models";
 import {
   DropdownMenu,
@@ -63,18 +63,18 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
     setCreateOpen(true);
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     const response = await apiClient.get<MaintenanceRecord[]>(
       `/ships/${shipId}/maintainance-tasks`,
     );
     setData(response.data);
     setLoading(false);
-  };
+  }, [shipId]);
 
   useEffect(() => {
     loadData();
-  }, [shipId]);
+  }, [shipId, loadData]);
 
   const onDelete = async () => {
     if (!selectedTaskId) return;
@@ -146,9 +146,7 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                   <>
                     {row.original.assignedTo && (
                       <div className="flex gap-2 items-center text-xs">
-                        <Avatar
-                          title={row.original.assignedTo.name ?? ""}
-                        >
+                        <Avatar title={row.original.assignedTo.name ?? ""}>
                           <AvatarImage
                             src={getAvatarUrl(
                               row.original.assignedTo?.name ??

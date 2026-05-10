@@ -10,7 +10,8 @@ export interface ShipVM {
 
 export interface MaintenanceRecord {
     id: string;
-    shipId?: string;
+    ship_id?: string;
+    ship?: ShipVM;
     title: string;
     description?: string;
     type: "routine" | "repair" | "inspection" | "upgrade";

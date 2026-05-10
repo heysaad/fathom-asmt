@@ -80,7 +80,7 @@ export function PaginationTable<TData, TValue>({
         </div>
       )}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm z-10 pt-28 pb-10">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="size-8 text-muted-foreground animate-spin" />
             <p className="text-sm text-muted-foreground">Loading data...</p>

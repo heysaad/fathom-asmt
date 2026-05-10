@@ -1,6 +1,6 @@
 import moment from "moment";
 
-export function FromNow({ date, ago = true }: { date?: string | Date, ago: boolean }) {
+export function FromNow({ date, ago = false }: { date?: string | Date, ago?: boolean }) {
   if (!date) return <div>-</div>;
 
   const d = moment(date);
@@ -14,4 +14,11 @@ export function DateFormat({ date, format = "DD MMM YYYY" }: { date?: string | D
   if (!date) return <div>-</div>;
   const d = moment(date);
   return <>{d.format(format)}</>;
+}
+
+export function FromCalendar({ date }: { date?: string | Date }) {
+  if (!date) return <div>-</div>;
+
+  const d = moment(date);
+  return <>{d.calendar()}</>;
 }
