@@ -59,8 +59,8 @@ export default function ShipPage({
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="maintainance">Maintainance</TabsTrigger>
-            <TabsTrigger value="safety-crew">Crew</TabsTrigger>
-            <TabsTrigger value="drills">Drills</TabsTrigger>
+            <TabsTrigger value="safety-crew">Crew Members</TabsTrigger>
+            <TabsTrigger value="drills">Safety Drills</TabsTrigger>
             <TabsTrigger value="compliance">Compliance & Audits</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">

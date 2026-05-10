@@ -91,8 +91,8 @@ async def get_my_drills_route(
         .join(DrillAssignment.drill)\
         .options(
             contains_eager(DrillAssignment.drill)
-                .joinedload(Drill.ship)
-        )\
+        .joinedload(Drill.ship)
+    )\
         .where(
             DrillAssignment.ship_crew_assignment.has(
                 user.id == ShipCrewAssignment.crew_member_id))\
@@ -153,16 +153,16 @@ async def get_drill_route(ship_id: str, drill_id: str, db=Depends(get_db)):
 
 @router.put("/drills/{drill_id}", summary="Update drill", response_model=DrillDto)
 async def update_drill_route(
-    drill_id: str, payload: UpdateDrillDto, db=Depends(get_db)
+    drill_id: str, payload: UpdateDrillDto, db: AsyncSession = Depends(get_db)
 ):
     """Update a drill"""
 
-    result = await db.execute(
+    result = await db.scalars(
         select(Drill).where(
             and_(Drill.id == drill_id, Drill.ship_id == payload.ship_id))
     )
 
-    drill = result.scalar_one_or_none()
+    drill = result.one_or_none()
 
     if not drill:
         raise HTTPException(
@@ -175,7 +175,7 @@ async def update_drill_route(
     if payload.scheduled_at is not None:
         drill.scheduled_at = payload.scheduled_at
 
-    if payload.status is not None:
+    if payload.status is not None and payload.status != drill.status:
         drill.status = payload.status
 
     if payload.started_at is not None:
