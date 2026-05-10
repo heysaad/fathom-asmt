@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
-from sqlalchemy import String, cast, select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
 from app.infra.data.database import get_db
 from app.infra.data.models.Ship import MaintainanceTask, Ship
@@ -25,6 +27,28 @@ async def get_ship_routes(db: AsyncSession = Depends(get_db)):
     return TypeAdapter(list[ShipDto]).validate_python(data)
 
 
+@router.post("/paginated", summary="Get ships with pagination")
+async def get_paginated_ships_route(
+    req: PaginationRequest[ShipFilterVM],
+    paginator: Paginator = Depends(),
+):
+    query = select(Ship)
+
+    if req.search:
+        query = query.where(
+            or_(
+                Ship.name.icontains(req.search),
+                Ship.imo.icontains(req.search),
+                Ship.type.icontains(req.search),
+                Ship.description.icontains(req.search),
+            )
+        )
+
+    paged = await paginator.get_paginated(
+        req, query.order_by(Ship.created_at.desc()))
+    return paged.to_dto(ShipDto)
+
+
 @router.post("", summary="Create a ship")
 async def create_ship_route(req: CreateShipRequest,
                             db: AsyncSession = Depends(get_db)):
@@ -44,6 +68,10 @@ class CreateShipRequest(BaseModel):
     name: str
     imo: str
     description: str | None
+
+
+class ShipFilterVM(BaseModel):
+    pass
 
 
 class CreateShipResponse(BaseModel):
