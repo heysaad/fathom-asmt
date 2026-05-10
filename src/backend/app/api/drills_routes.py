@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select, and_
 from sqlalchemy.orm import contains_eager, joinedload
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.infra.data.database import get_db
 from app.infra.data.models.Ship import Drill, DrillAssignment, ShipCrewAssignment
@@ -21,6 +21,12 @@ from app.api.ship_drill_assignment_routes import DrillAssignmentDto
 from app.services.event_triggers import EventTriggers
 
 router = APIRouter()
+
+
+def to_db_datetime(value: datetime | None):
+    if value and value.tzinfo:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
 
 
 # ==================== DTOs ====================
@@ -92,10 +98,10 @@ async def get_paginated_drills_route(
         filters.append(Drill.type == req.filters.drill_type)
 
     if req.filters and req.filters.dateFrom:
-        filters.append(Drill.scheduled_at >= req.filters.dateFrom)
+        filters.append(Drill.scheduled_at >= to_db_datetime(req.filters.dateFrom))
 
     if req.filters and req.filters.dateTo:
-        filters.append(Drill.scheduled_at <= req.filters.dateTo)
+        filters.append(Drill.scheduled_at <= to_db_datetime(req.filters.dateTo))
 
     query = select(Drill).options(joinedload(Drill.ship))
 
@@ -131,10 +137,10 @@ async def get_my_drills_route(
         filters.append(Drill.type == req.filters.drill_type)
 
     if req.filters and req.filters.dateFrom:
-        filters.append(Drill.scheduled_at >= req.filters.dateFrom)
+        filters.append(Drill.scheduled_at >= to_db_datetime(req.filters.dateFrom))
 
     if req.filters and req.filters.dateTo:
-        filters.append(Drill.scheduled_at <= req.filters.dateTo)
+        filters.append(Drill.scheduled_at <= to_db_datetime(req.filters.dateTo))
 
     query = select(DrillAssignment)\
         .join(DrillAssignment.drill)\
@@ -171,10 +177,10 @@ async def get_my_drills_route(
         filters.append(Drill.type == req.filters.drill_type)
 
     if req.filters and req.filters.dateFrom:
-        filters.append(Drill.scheduled_at >= req.filters.dateFrom)
+        filters.append(Drill.scheduled_at >= to_db_datetime(req.filters.dateFrom))
 
     if req.filters and req.filters.dateTo:
-        filters.append(Drill.scheduled_at <= req.filters.dateTo)
+        filters.append(Drill.scheduled_at <= to_db_datetime(req.filters.dateTo))
 
     query = select(Drill).where(
         and_(*filters)).order_by(Drill.scheduled_at.desc())

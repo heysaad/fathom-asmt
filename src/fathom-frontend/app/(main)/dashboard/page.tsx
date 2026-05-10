@@ -17,7 +17,7 @@ export default function Page() {
     );
   }
 
-  if (user?.role === "crew") {
+  if (user?.role !== "crew") {
     return <CrewDashboardView />;
   }
 

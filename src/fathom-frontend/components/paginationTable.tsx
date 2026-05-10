@@ -30,12 +30,14 @@ export function PaginationTable<TData, TValue>({
   filters,
   actions,
   headerLeft,
+  initialPageSize,
 }: {
   url: string;
   columns: ColumnDef<TData, TValue>[];
   filters?: any;
   actions?: React.ReactNode;
   headerLeft?: React.ReactElement;
+  initialPageSize?: number;
 }) {
   const {
     totalPages,
@@ -53,7 +55,7 @@ export function PaginationTable<TData, TValue>({
     goToPage,
     search,
     setSearch,
-  } = usePagination<TData>({ url: url });
+  } = usePagination<TData>({ url: url, initialPageSize });
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   useEffect(() => {
@@ -182,13 +184,15 @@ export function PaginationTable<TData, TValue>({
 export function usePagination<T>({
   url,
   filters: defaultFilters,
+  initialPageSize = 10,
 }: {
   url: string;
   filters?: any;
+  initialPageSize?: number;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(initialPageSize);
   const [search, setSearch] = useState<string>();
   const [filters, setFilters] = useState<any>(defaultFilters);
   const [loading, setLoading] = useState(true);

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -19,6 +19,12 @@ from app.schemas.common import ShipDto, UserDto
 from app.services.event_triggers import EventTriggers
 
 router = APIRouter()
+
+
+def to_db_datetime(value: datetime | None):
+    if value and value.tzinfo:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
 
 
 @router.post("/paginated")
@@ -42,10 +48,12 @@ async def get_paginated_list(
         query = query.where(MaintainanceTask.status == filters.status)
 
     if filters and filters.dateFrom:
-        query = query.where(MaintainanceTask.due_date >= filters.dateFrom)
+        query = query.where(
+            MaintainanceTask.due_date >= to_db_datetime(filters.dateFrom))
 
     if filters and filters.dateTo:
-        query = query.where(MaintainanceTask.due_date <= filters.dateTo)
+        query = query.where(
+            MaintainanceTask.due_date <= to_db_datetime(filters.dateTo))
 
     paged = await paginator.get_paginated(
         req, query.order_by(MaintainanceTask.created_at.desc())
@@ -73,10 +81,12 @@ async def get_my_tasks(
         query = query.where(MaintainanceTask.status == filters.status)
 
     if filters and filters.dateFrom:
-        query = query.where(MaintainanceTask.due_date >= filters.dateFrom)
+        query = query.where(
+            MaintainanceTask.due_date >= to_db_datetime(filters.dateFrom))
 
     if filters and filters.dateTo:
-        query = query.where(MaintainanceTask.due_date <= filters.dateTo)
+        query = query.where(
+            MaintainanceTask.due_date <= to_db_datetime(filters.dateTo))
 
     paged = await paginator.get_paginated(
         req, query.order_by(MaintainanceTask.created_at.desc())

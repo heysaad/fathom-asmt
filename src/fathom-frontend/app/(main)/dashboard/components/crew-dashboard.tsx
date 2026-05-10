@@ -1,322 +1,290 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
-  ArrowRightIcon,
-  CheckIcon,
-  Loader2Icon,
-  RefreshCwIcon,
+  AlertTriangleIcon,
+  CalendarCheckIcon,
+  ListTodoIcon,
+  ShieldCheckIcon,
 } from "lucide-react";
 
 import apiClient from "@/app/lib/api-client";
 import { useUser } from "@/app/lib/user-context";
+import { PaginationTable } from "@/components/paginationTable";
 import { Button } from "@/components/ui/button";
+import { FromCalendar } from "@/components/libs/moment";
+import ShipImg from "../../ships/components/shipImg";
 import type { DrillAssignment, MaintenanceRecord } from "../../ships/models";
 import {
   DashboardHeader,
-  EmptyState,
   MetricCard,
-  ProgressBar,
-  SectionCard,
   StatusBadge,
-  dashboardIcons,
-  formatShortDate,
-  isPastDue,
 } from "./dashboard-utils";
 import type { PagedResponse } from "./dashboard-utils";
 
+type CrewSummary = {
+  complianceScore: number;
+  openTasks: number;
+  overdueTasks: number;
+  upcomingDrills: number;
+};
+
 export default function CrewDashboardView() {
   const { user } = useUser();
-  const [tasks, setTasks] = useState<MaintenanceRecord[]>([]);
-  const [drills, setDrills] = useState<DrillAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>();
+  const [summary, setSummary] = useState<CrewSummary>({
+    complianceScore: 0,
+    openTasks: 0,
+    overdueTasks: 0,
+    upcomingDrills: 0,
+  });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(undefined);
+  const loadSummary = useCallback(async () => {
+    const now = new Date().toISOString();
+    const [
+      scheduledTasks,
+      inProgressTasks,
+      completedTasks,
+      overdueScheduledTasks,
+      overdueInProgressTasks,
+      upcomingDrills,
+      completedDrills,
+      missedDrills,
+    ] = await Promise.all([
+      apiClient.post<PagedResponse<MaintenanceRecord>>("/tasks/my-tasks", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "scheduled" },
+      }),
+      apiClient.post<PagedResponse<MaintenanceRecord>>("/tasks/my-tasks", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "in_progress" },
+      }),
+      apiClient.post<PagedResponse<MaintenanceRecord>>("/tasks/my-tasks", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "completed" },
+      }),
+      apiClient.post<PagedResponse<MaintenanceRecord>>("/tasks/my-tasks", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "scheduled", dateTo: now },
+      }),
+      apiClient.post<PagedResponse<MaintenanceRecord>>("/tasks/my-tasks", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "in_progress", dateTo: now },
+      }),
+      apiClient.post<PagedResponse<DrillAssignment>>("/drills/my-drills", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "scheduled" },
+      }),
+      apiClient.post<PagedResponse<DrillAssignment>>("/drills/my-drills", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "completed" },
+      }),
+      apiClient.post<PagedResponse<DrillAssignment>>("/drills/my-drills", {
+        page: 1,
+        pageSize: 1,
+        filters: { status: "missed" },
+      }),
+    ]);
 
-    try {
-      const [taskResponse, drillResponse] = await Promise.all([
-        apiClient.post<PagedResponse<MaintenanceRecord>>("/tasks/my-tasks", {
-          page: 1,
-          pageSize: 100,
-          filters: {},
-        }),
-        apiClient.post<PagedResponse<DrillAssignment>>("/drills/my-drills", {
-          page: 1,
-          pageSize: 100,
-          filters: {},
-        }),
-      ]);
+    const completed = completedTasks.data.total + completedDrills.data.total;
+    const total =
+      scheduledTasks.data.total +
+      inProgressTasks.data.total +
+      completedTasks.data.total +
+      upcomingDrills.data.total +
+      completedDrills.data.total +
+      missedDrills.data.total;
 
-      setTasks(taskResponse.data.data);
-      setDrills(drillResponse.data.data);
-    } catch {
-      setError("Unable to load your dashboard data");
-    } finally {
-      setLoading(false);
-    }
+    setSummary({
+      complianceScore: total ? Math.round((completed / total) * 100) : 0,
+      openTasks: scheduledTasks.data.total + inProgressTasks.data.total,
+      overdueTasks:
+        overdueScheduledTasks.data.total + overdueInProgressTasks.data.total,
+      upcomingDrills: upcomingDrills.data.total,
+    });
   }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadData();
-  }, [loadData]);
+    loadSummary();
+  }, [loadSummary]);
 
-  const summary = useMemo(() => {
-    const completedTasks = tasks.filter((task) => task.status === "completed");
-    const openTasks = tasks.filter((task) => task.status !== "completed");
-    const overdueTasks = openTasks.filter((task) => isPastDue(task.dueDate));
-    const attendedDrills = drills.filter((drill) => drill.is_attended);
-    const missedDrills = drills.filter(
-      (drill) =>
-        !drill.is_attended &&
-        (drill.drill?.status === "missed" ||
-          isPastDue(drill.drill?.scheduled_at)),
-    );
-    const upcomingDrills = drills.filter(
-      (drill) =>
-        !drill.is_attended &&
-        drill.drill?.status !== "completed" &&
-        !isPastDue(drill.drill?.scheduled_at),
-    );
-    const complianceTotal = tasks.length + drills.length;
-    const complianceDone = completedTasks.length + attendedDrills.length;
-    const compliance = complianceTotal
-      ? Math.round((complianceDone / complianceTotal) * 100)
-      : 0;
+  const taskColumns = [
+    {
+      accessorKey: "title",
+      header: "Task",
+      cell: ({ row }) => (
+        <div className="max-w-72">
+          <p className="font-medium">{row.original.title}</p>
+          <p className="text-xs capitalize text-muted-foreground">
+            {row.original.type}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: "Ship",
+      cell: ({ row }) => (
+        <Link
+          href={`/ships/${row.original.ship_id}`}
+          className="flex min-w-48 items-center gap-2"
+        >
+          {row.original.ship_id && (
+            <ShipImg id={row.original.ship_id} className="size-8 rounded-lg border" />
+          )}
+          <span className="truncate">{row.original.ship?.name}</span>
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "dueDate",
+      header: "Due",
+      cell: ({ row }) =>
+        row.original.dueDate ? <FromCalendar date={row.original.dueDate} /> : "-",
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    },
+  ] as ColumnDef<MaintenanceRecord>[];
 
-    return {
-      attendedDrills,
-      completedTasks,
-      compliance,
-      missedDrills,
-      openTasks,
-      overdueTasks,
-      upcomingDrills,
-    };
-  }, [drills, tasks]);
-
-  const priorityTasks = useMemo(
-    () =>
-      tasks
-        .filter((task) => task.status !== "completed")
-        .sort(
-          (a, b) =>
-            new Date(a.dueDate ?? 0).getTime() -
-            new Date(b.dueDate ?? 0).getTime(),
-        )
-        .slice(0, 6),
-    [tasks],
-  );
-
-  const drillQueue = useMemo(
-    () =>
-      drills
-        .filter((assignment) => assignment.drill?.status !== "completed")
-        .sort(
-          (a, b) =>
-            new Date(a.drill?.scheduled_at ?? 0).getTime() -
-            new Date(b.drill?.scheduled_at ?? 0).getTime(),
-        )
-        .slice(0, 6),
-    [drills],
-  );
-
-  if (loading) {
-    return (
-      <div className="flex min-h-80 items-center justify-center">
-        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  const drillColumns = [
+    {
+      accessorKey: "title",
+      header: "Drill",
+      cell: ({ row }) => (
+        <div className="max-w-72">
+          <p className="font-medium">
+            {row.original.drill?.title ??
+              row.original.drill?.type.replaceAll("_", " ")}
+          </p>
+          <p className="text-xs capitalize text-muted-foreground">
+            {row.original.drill?.type.replaceAll("_", " ")}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: "Ship",
+      cell: ({ row }) => (
+        <Link
+          href={`/ships/${row.original.drill?.ship_id}`}
+          className="flex min-w-48 items-center gap-2"
+        >
+          {row.original.drill?.ship_id && (
+            <ShipImg
+              id={row.original.drill.ship_id}
+              className="size-8 rounded-lg border"
+            />
+          )}
+          <span className="truncate">{row.original.drill?.ship?.name}</span>
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "scheduled_at",
+      header: "Scheduled",
+      cell: ({ row }) =>
+        row.original.drill?.scheduled_at ? (
+          <FromCalendar date={row.original.drill.scheduled_at} />
+        ) : (
+          "-"
+        ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.original.drill?.status} />,
+    },
+  ] as ColumnDef<DrillAssignment>[];
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <DashboardHeader
         eyebrow="Crew dashboard"
-        title={`Welcome aboard${user?.name ? `, ${user.name}` : ""}`}
-        description="Track assigned maintenance, drill attendance, upcoming ship activities, and your personal compliance posture."
+        title={`My work${user?.name ? `, ${user.name}` : ""}`}
+        description="A simple view of assigned maintenance and upcoming drills."
         actionHref="/tasks"
-        actionLabel="Open my tasks"
+        actionLabel="Open task page"
       />
-
-      {error && (
-        <div className="flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <span>{error}</span>
-          <Button variant="outline" size="sm" onClick={loadData}>
-            <RefreshCwIcon className="size-4" />
-            Retry
-          </Button>
-        </div>
-      )}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          title="Personal compliance"
-          value={`${summary.compliance}%`}
-          helper={`${summary.completedTasks.length + summary.attendedDrills.length} activities closed`}
-          icon={dashboardIcons.progress}
-          tone={summary.compliance >= 80 ? "green" : "amber"}
+          title="Compliance score"
+          value={`${summary.complianceScore}%`}
+          helper="Tasks and drills completed"
+          icon={<ShieldCheckIcon className="size-5" />}
+          tone={summary.complianceScore >= 80 ? "green" : "amber"}
         />
         <MetricCard
           title="Open tasks"
-          value={summary.openTasks.length}
-          helper={`${summary.overdueTasks.length} overdue`}
-          icon={dashboardIcons.tasks}
-          tone={summary.overdueTasks.length ? "red" : "blue"}
+          value={summary.openTasks}
+          helper="Scheduled or in progress"
+          icon={<ListTodoIcon className="size-5" />}
+          tone={summary.openTasks ? "blue" : "green"}
+        />
+        <MetricCard
+          title="Overdue tasks"
+          value={summary.overdueTasks}
+          helper="Past due and not completed"
+          icon={<AlertTriangleIcon className="size-5" />}
+          tone={summary.overdueTasks ? "red" : "green"}
         />
         <MetricCard
           title="Upcoming drills"
-          value={summary.upcomingDrills.length}
-          helper={`${summary.attendedDrills.length} attended`}
-          icon={dashboardIcons.drills}
-          tone="slate"
-        />
-        <MetricCard
-          title="Attention needed"
-          value={summary.overdueTasks.length + summary.missedDrills.length}
-          helper="Overdue or missed activities"
-          icon={dashboardIcons.alerts}
-          tone={
-            summary.overdueTasks.length + summary.missedDrills.length
-              ? "red"
-              : "green"
-          }
+          value={summary.upcomingDrills}
+          helper="Scheduled attendance"
+          icon={<CalendarCheckIcon className="size-5" />}
         />
       </div>
 
-      <SectionCard title="Activity completion">
-        <div className="grid gap-6 lg:grid-cols-2">
+      <div className="rounded-lg border bg-card p-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Maintenance tasks</span>
-              <span className="font-medium">
-                {summary.completedTasks.length}/{tasks.length}
-              </span>
-            </div>
-            <ProgressBar
-              value={
-                tasks.length
-                  ? Math.round((summary.completedTasks.length / tasks.length) * 100)
-                  : 0
-              }
-              className="mt-3"
-            />
+            <h2 className="font-medium">My open tasks</h2>
+            <p className="text-sm text-muted-foreground">
+              Tasks assigned to you that are still scheduled.
+            </p>
           </div>
-          <div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Drill attendance</span>
-              <span className="font-medium">
-                {summary.attendedDrills.length}/{drills.length}
-              </span>
-            </div>
-            <ProgressBar
-              value={
-                drills.length
-                  ? Math.round((summary.attendedDrills.length / drills.length) * 100)
-                  : 0
-              }
-              className="mt-3"
-            />
-          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/tasks">All tasks</Link>
+          </Button>
         </div>
-      </SectionCard>
+        <PaginationTable
+          url="/tasks/my-tasks"
+          columns={taskColumns}
+          filters={{ status: "scheduled" }}
+          initialPageSize={5}
+        />
+      </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <SectionCard
-          title="Priority maintenance"
-          action={
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/tasks">
-                All tasks
-                <ArrowRightIcon className="size-4" />
-              </Link>
-            </Button>
-          }
-        >
-          {priorityTasks.length ? (
-            <div className="divide-y">
-              {priorityTasks.map((task) => (
-                <Link
-                  key={task.id}
-                  href="/tasks"
-                  className="grid gap-3 py-4 transition-colors hover:bg-muted/40 sm:grid-cols-[1fr_auto]"
-                >
-                  <span>
-                    <span className="block font-medium">{task.title}</span>
-                    <span className="block text-sm text-muted-foreground">
-                      {task.ship?.name ?? "Assigned ship"} - due{" "}
-                      {formatShortDate(task.dueDate)}
-                    </span>
-                  </span>
-                  <StatusBadge
-                    status={task.status}
-                    overdue={task.status !== "completed" && isPastDue(task.dueDate)}
-                  />
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="No open maintenance"
-              helper="Assigned tasks will appear here when they need action."
-            />
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title="Drill queue"
-          action={
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/drills">
-                My drills
-                <ArrowRightIcon className="size-4" />
-              </Link>
-            </Button>
-          }
-        >
-          {drillQueue.length ? (
-            <div className="divide-y">
-              {drillQueue.map((assignment) => (
-                <Link
-                  key={assignment.id}
-                  href="/drills"
-                  className="grid gap-3 py-4 transition-colors hover:bg-muted/40 sm:grid-cols-[1fr_auto]"
-                >
-                  <span>
-                    <span className="block font-medium">
-                      {assignment.drill?.title ??
-                        assignment.drill?.type.replaceAll("_", " ")}
-                    </span>
-                    <span className="block text-sm text-muted-foreground">
-                      {assignment.drill?.ship?.name ?? "Assigned ship"} -{" "}
-                      {formatShortDate(assignment.drill?.scheduled_at)}
-                    </span>
-                  </span>
-                  {assignment.is_attended ? (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                      <CheckIcon className="size-3" />
-                      Attended
-                    </span>
-                  ) : (
-                    <StatusBadge
-                      status={assignment.drill?.status}
-                      overdue={isPastDue(assignment.drill?.scheduled_at)}
-                    />
-                  )}
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="No pending drills"
-              helper="Upcoming drill assignments will appear here."
-            />
-          )}
-        </SectionCard>
+      <div className="rounded-lg border bg-card p-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-medium">My upcoming drills</h2>
+            <p className="text-sm text-muted-foreground">
+              Scheduled drills where your attendance matters.
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/drills">All drills</Link>
+          </Button>
+        </div>
+        <PaginationTable
+          url="/drills/my-drills"
+          columns={drillColumns}
+          filters={{ status: "scheduled" }}
+          initialPageSize={5}
+        />
       </div>
     </div>
   );
