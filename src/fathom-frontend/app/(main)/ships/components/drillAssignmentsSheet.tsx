@@ -41,6 +41,7 @@ import { getAvatarUrl } from "@/app/lib/helpers";
 import AddCrewToDrillDialog from "./addCrewToDrillDialog";
 import EditDrillAssignmentDialog from "./editDrillAssignmentDialog";
 import { UserBadge, UserBadgeSm } from "@/components/app/userBadge";
+import { Badge } from "@/components/ui/badge";
 
 interface DrillAssignmentsSheetProps {
   open: boolean;
@@ -105,19 +106,14 @@ export default function DrillAssignmentsSheet({
       ),
     },
     {
-      accessorKey: "is_attended",
-      header: "Attended",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 text-xs rounded-full ${row.original.is_attended
-            ? "bg-green-100 text-green-800"
-            : "bg-gray-100 text-gray-800"
-            }`}
-        >
-          {row.original.is_attended ? "Yes" : "No"}
-        </span>
-      ),
-    },
+        accessorKey: "is_attended",
+        header: "Attended",
+        cell: ({ row }) => (
+          <Badge tone={row.original.is_attended ? "green" : "slate"}>
+            {row.original.is_attended ? "Yes" : "No"}
+          </Badge>
+        ),
+      },
     {
       accessorKey: "actions",
       header: "",

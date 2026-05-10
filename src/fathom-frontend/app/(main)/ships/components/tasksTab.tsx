@@ -43,6 +43,7 @@ import { PaginationTable } from "@/components/paginationTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/app/lib/helpers";
+import { StatusBadge } from "@/components/ui/badge";
 
 export default function MaintainanceSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -194,21 +195,9 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
               {
                 accessorKey: "status",
                 header: "Status",
-                cell: ({ row }) => {
-                  const status = row.original.status;
-                  let color = "gray";
-                  if (status === "completed")
-                    color = "bg-green-100 text-green-800";
-                  else if (status === "in_progress")
-                    color = "bg-yellow-100 text-yellow-800";
-                  else if (status === "scheduled")
-                    color = "bg-orange-100 text-orange-800";
-                  return (
-                    <span className={`px-2 py-1 text-xs rounded-full ${color}`}>
-                      {status.replace("_", " ").toUpperCase()}
-                    </span>
-                  );
-                },
+                cell: ({ row }) => (
+                  <StatusBadge status={row.original.status} />
+                ),
               },
               {
                 accessorKey: "actions",

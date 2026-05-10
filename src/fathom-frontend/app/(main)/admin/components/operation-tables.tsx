@@ -7,6 +7,7 @@ import { FilterIcon, UserIcon } from "lucide-react";
 
 import { FromCalendar } from "@/components/libs/moment";
 import { PaginationTable } from "@/components/paginationTable";
+import { StatusBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
@@ -34,25 +35,6 @@ function endOfDayFilter(value: string) {
 
 function dateInputValue(value?: string) {
   return value?.slice(0, 10) ?? "";
-}
-
-function StatusBadge({ status }: { status?: string }) {
-  const tone =
-    status === "completed"
-      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-      : status === "in_progress"
-        ? "bg-sky-50 text-sky-700 ring-sky-200"
-        : status === "missed" || status === "cancelled"
-          ? "bg-red-50 text-red-700 ring-red-200"
-          : "bg-amber-50 text-amber-700 ring-amber-200";
-
-  return (
-    <span
-      className={`inline-flex rounded-md px-2 py-1 text-xs font-medium capitalize ring-1 ${tone}`}
-    >
-      {(status ?? "unknown").replaceAll("_", " ")}
-    </span>
-  );
 }
 
 function ShipCell({

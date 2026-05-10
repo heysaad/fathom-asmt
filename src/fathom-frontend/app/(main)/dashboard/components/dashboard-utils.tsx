@@ -54,35 +54,6 @@ export function scoreTone(score?: number) {
   return "text-red-700 bg-red-50 ring-red-200";
 }
 
-export function StatusBadge({
-  status,
-  overdue,
-}: {
-  status?: string;
-  overdue?: boolean;
-}) {
-  const tone = overdue
-    ? "bg-red-50 text-red-700 ring-red-200"
-    : status === "completed"
-      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-      : status === "in_progress"
-        ? "bg-sky-50 text-sky-700 ring-sky-200"
-        : status === "missed" || status === "cancelled"
-          ? "bg-red-50 text-red-700 ring-red-200"
-          : "bg-amber-50 text-amber-700 ring-amber-200";
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium capitalize ring-1",
-        tone,
-      )}
-    >
-      {overdue ? "Overdue" : formatStatus(status)}
-    </span>
-  );
-}
-
 export function MetricCard({
   title,
   value,

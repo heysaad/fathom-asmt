@@ -16,11 +16,8 @@ import { Button } from "@/components/ui/button";
 import { FromCalendar } from "@/components/libs/moment";
 import ShipImg from "../../ships/components/shipImg";
 import type { Drill, MaintenanceRecord, ShipVM } from "../../ships/models";
-import {
-  DashboardHeader,
-  MetricCard,
-  StatusBadge,
-} from "./dashboard-utils";
+import { StatusBadge } from "@/components/ui/badge";
+import { DashboardHeader, MetricCard } from "./dashboard-utils";
 import type { PagedResponse } from "./dashboard-utils";
 
 type AdminSummary = {

@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ScoreBadge } from "@/components/ui/badge";
 import { PaginationTable } from "@/components/paginationTable";
-import { PlusIcon, ShipWheelIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -11,37 +12,6 @@ import CreateShipDialog, {
 } from "./components/createShipDialog";
 import type { ShipVM } from "./models";
 import ShipImg from "./components/shipImg";
-
-function ComplianceBadge({ score }: { score?: number }) {
-  const value = score ?? 0;
-  const tone =
-    value >= 90
-      ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
-      : value >= 70
-        ? "bg-amber-50 text-amber-700 ring-amber-200"
-        : "bg-red-50 text-red-700 ring-red-200";
-
-  return (
-    <div className="min-w-36">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <span
-          className={`rounded-md px-2 py-1 text-xs font-medium ring-1 ${tone}`}
-        >
-          {value}%
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {value >= 90 ? "Good" : value >= 70 ? "Watch" : "Risk"}
-        </span>
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-primary"
-          style={{ width: `${value}%` }}
-        />
-      </div>
-    </div>
-  );
-}
 
 export default function ShipsPage() {
   const addRef = React.useRef<CreateShipDialogHandle>(null);
@@ -86,7 +56,7 @@ export default function ShipsPage() {
       accessorKey: "compliance_score",
       header: "Compliance",
       cell: ({ row }) => (
-        <ComplianceBadge score={row.original.compliance_score} />
+        <ScoreBadge score={row.original.compliance_score} />
       ),
     },
     {
