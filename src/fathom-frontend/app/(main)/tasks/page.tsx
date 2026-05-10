@@ -20,7 +20,7 @@ export default function DrillsPage() {
       <h2 className="page-title mb-4">Tasks</h2>
 
       <PaginationTable
-        url="/tasks/me/paginated"
+        url="/tasks/my-tasks"
         columns={[{ accessorKey: "id", header: "Id" }]}
         filters={filters}
         headerLeft={

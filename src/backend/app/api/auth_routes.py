@@ -4,7 +4,7 @@ from app.infra.auth.users import auth_backend, get_current_user, fastapi_users
 from fastapi_users import schemas
 
 from app.infra.data.models.User import User
-from app.schemas import UserRead, UserCreate, UserUpdate
+from app.schemas.schemas import UserRead, UserCreate, UserUpdate
 
 router = APIRouter()
 

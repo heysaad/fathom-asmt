@@ -11,9 +11,9 @@ from app.services.paginator import PaginationRequest, PaginationResponse, Pagina
 from app.api.tasks_routes import FilterVM, TaskDto
 from app.infra.data.models.User import User
 from app.api.user_routes import UserDto
+from app.schemas.common import ShipDto
 
 router = APIRouter()
-
 
 @router.get("", summary="Get ships")
 async def get_ship_routes(db=Depends(get_db)):
@@ -44,17 +44,6 @@ class CreateShipRequest(BaseModel):
 
 class CreateShipResponse(BaseModel):
     id: UUID
-
-
-class ShipDto(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    name: str
-    imo: str | None
-    description: str | None
-    type: str
-    created_at: datetime
 
 
 @router.get("/{ship_id}", summary="Get ship details")

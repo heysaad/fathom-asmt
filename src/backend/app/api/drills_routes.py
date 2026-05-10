@@ -53,37 +53,11 @@ class UpdateDrillDto(BaseModel):
     notes: str | None = None
 
 
-class DrillAssignmentDto(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
-    drill_id: UUID
-    assigned_at: datetime
-    is_attended: bool
-    is_completed: bool
-    attended_at: datetime | None
-    remarks: str | None
-    crew_member: Optional[UserDto] = None
-
-
-class CreateDrillAssignmentDto(BaseModel):
-    crew_id: UUID
-
-
-class UpdateDrillAssignmentDto(BaseModel):
-    is_attended: bool | None = None
-    is_completed: bool | None = None
-    attended_at: datetime | None = None
-    remarks: str | None = None
-
 
 class FilterVM(BaseModel):
     status: str | None = None
     drill_type: str | None = None
 
-
-class AssignmentFilterVM(BaseModel):
-    is_attended: bool
 
 
 # ==================== DRILL ENDPOINTS ====================
@@ -110,7 +84,31 @@ async def create_drill_route(ship_id: str, payload: CreateDrillDto, db=Depends(g
 
 
 @router.post(
-    "/{ship_id}/drills/list",
+    "/drills/list",
+    summary="Get drills with pagination",
+    response_model=PaginationResponse[DrillDto],
+)
+async def get_drills_route(
+    req: PaginationRequest[FilterVM], db=Depends(get_db)
+):
+    """Get paginated list of drills for a ship"""
+
+    filters = []
+
+    if req.filters and req.filters.status:
+        filters.append(Drill.status == req.filters.status)
+
+    if req.filters and req.filters.drill_type:
+        filters.append(Drill.type == req.filters.drill_type)
+
+    query = select(Drill).where(and_(*filters)).order_by(Drill.scheduled_at.desc())
+
+    paginator = Paginator(db)
+    result = await paginator.get_paginated(req, query)
+    return result.to_dto(DrillDto)
+
+@router.post(
+    "/ships/{ship_id}/drills/list",
     summary="Get drills with pagination",
     response_model=PaginationResponse[DrillDto],
 )
@@ -135,7 +133,7 @@ async def get_drills_route(
 
 
 @router.get(
-    "/{ship_id}/drills/{drill_id}",
+    "/ships/{ship_id}/drills/{drill_id}",
     summary="Get specific drill",
     response_model=DrillDto,
 )
@@ -157,7 +155,7 @@ async def get_drill_route(ship_id: str, drill_id: str, db=Depends(get_db)):
 
 
 @router.put(
-    "/{ship_id}/drills/{drill_id}", summary="Update drill", response_model=DrillDto
+    "/ships/{ship_id}/drills/{drill_id}", summary="Update drill", response_model=DrillDto
 )
 async def update_drill_route(
     ship_id: str, drill_id: str, payload: UpdateDrillDto, db=Depends(get_db)
@@ -200,7 +198,7 @@ async def update_drill_route(
 
 
 @router.delete(
-    "/{ship_id}/drills/{drill_id}",
+    "/ships/{ship_id}/drills/{drill_id}",
     summary="Delete drill",
     status_code=status.HTTP_204_NO_CONTENT,
 )
@@ -219,217 +217,4 @@ async def delete_drill_route(ship_id: str, drill_id: str, db=Depends(get_db)):
         )
 
     await db.delete(drill)
-    await db.commit()
-
-
-# ==================== DRILL ASSIGNMENT ENDPOINTS ====================
-
-
-@router.post(
-    "/{ship_id}/drills/{drill_id}/assignments",
-    summary="Assign crew to drill",
-    response_model=DrillAssignmentDto,
-)
-async def create_drill_assignment_route(
-    ship_id: UUID,
-    drill_id: UUID,
-    payload: CreateDrillAssignmentDto,
-    db: AsyncSession = Depends(get_db),
-):
-    """Assign a crew member to a drill"""
-
-    assignment_query = await db.execute(
-        select(ShipCrewAssignment).where(
-            ShipCrewAssignment.crew_member_id == payload.crew_id,
-            ShipCrewAssignment.ship_id == ship_id,
-            ShipCrewAssignment.is_active == True,
-        )
-    )
-    crew_assignment_id = assignment_query.scalar_one_or_none().id
-
-    # Verify drill exists
-    drill_result = await db.execute(
-        select(Drill).where(and_(Drill.id == drill_id, Drill.ship_id == ship_id))
-    )
-
-    if not drill_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Drill not found"
-        )
-
-    # Check if assignment already exists
-    existing = await db.execute(
-        select(DrillAssignment)
-        .join(
-            ShipCrewAssignment,
-            ShipCrewAssignment.id == DrillAssignment.ship_crew_assignment_id
-            and ShipCrewAssignment.is_active == True,
-        )
-        .where(
-            and_(
-                DrillAssignment.drill_id == drill_id,
-                ShipCrewAssignment.crew_member_id == payload.crew_id,
-            )
-        )
-    )
-
-    if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Crew member is already assigned to this drill",
-        )
-
-    assignment = DrillAssignment(
-        drill_id=drill_id,
-        ship_crew_assignment_id=crew_assignment_id,
-        is_attended=False,
-        is_completed=False,
-    )
-
-    db.add(assignment)
-    await db.commit()
-    await db.refresh(assignment)
-
-    return DrillAssignmentDto.model_validate(assignment)
-
-
-@router.post(
-    "/{ship_id}/drills/{drill_id}/assignments/list",
-    summary="Get drill assignments with pagination",
-    response_model=PaginationResponse[DrillAssignmentDto],
-)
-async def get_drill_assignments_route(
-    ship_id: str,
-    drill_id: str,
-    req: PaginationRequest[AssignmentFilterVM],
-    db=Depends(get_db),
-):
-    """Get paginated list of crew assignments for a drill"""
-
-    # Verify drill exists
-    drill_result = await db.execute(
-        select(Drill).where(and_(Drill.id == drill_id, Drill.ship_id == ship_id))
-    )
-
-    if not drill_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Drill not found"
-        )
-
-    filters = [DrillAssignment.drill_id == drill_id]
-
-    if req.filters and req.filters.is_attended is not None:
-        filters.append(DrillAssignment.is_attended == req.filters.is_attended)
-
-    query = (
-        select(DrillAssignment)
-        .join(ShipCrewAssignment)
-        .options(contains_eager(DrillAssignment.ship_crew_assignment))
-        .where(and_(*filters))
-        .order_by(DrillAssignment.assigned_at.desc())
-    )
-
-    paginator = Paginator(db)
-    result = await paginator.get_paginated(req, query)
-    for x in result.data:
-        x.crew_member = x.ship_crew_assignment.crew_member
-
-    return result.to_dto(DrillAssignmentDto)
-
-
-@router.put(
-    "/{ship_id}/drills/{drill_id}/assignments/{assignment_id}",
-    summary="Update drill assignment",
-    response_model=DrillAssignmentDto,
-)
-async def update_drill_assignment_route(
-    ship_id: str,
-    drill_id: str,
-    assignment_id: str,
-    payload: UpdateDrillAssignmentDto,
-    db=Depends(get_db),
-):
-    """Update a drill assignment"""
-
-    # Verify drill exists
-    drill_result = await db.execute(
-        select(Drill).where(and_(Drill.id == drill_id, Drill.ship_id == ship_id))
-    )
-
-    if not drill_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Drill not found"
-        )
-
-    result = await db.execute(
-        select(DrillAssignment).where(
-            and_(
-                DrillAssignment.id == assignment_id,
-                DrillAssignment.drill_id == drill_id,
-            )
-        )
-    )
-
-    assignment = result.scalar_one_or_none()
-
-    if not assignment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found"
-        )
-
-    if payload.is_attended is not None:
-        assignment.is_attended = payload.is_attended
-
-    if payload.is_completed is not None:
-        assignment.is_completed = payload.is_completed
-
-    if payload.attended_at is not None:
-        assignment.attended_at = payload.attended_at
-
-    if payload.remarks is not None:
-        assignment.remarks = payload.remarks
-
-    await db.commit()
-    await db.refresh(assignment)
-
-    return DrillAssignmentDto.model_validate(assignment)
-
-
-@router.delete(
-    "/{ship_id}/drills/{drill_id}/assignments/{assignment_id}",
-    summary="Remove crew from drill",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-async def delete_drill_assignment_route(
-    ship_id: str, drill_id: str, assignment_id: str, db=Depends(get_db)
-):
-    """Remove a crew member from a drill"""
-
-    # Verify drill exists
-    drill_result = await db.execute(
-        select(Drill).where(and_(Drill.id == drill_id, Drill.ship_id == ship_id))
-    )
-
-    if not drill_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Drill not found"
-        )
-
-    result = await db.execute(
-        select(DrillAssignment).where(
-            and_(
-                DrillAssignment.id == assignment_id,
-                DrillAssignment.drill_id == drill_id,
-            )
-        )
-    )
-
-    assignment = result.scalar_one_or_none()
-
-    if not assignment:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found"
-        )
-
-    await db.delete(assignment)
     await db.commit()
