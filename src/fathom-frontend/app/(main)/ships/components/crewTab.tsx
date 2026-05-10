@@ -17,11 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Edit2Icon,
-  EllipsisVerticalIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { Edit2Icon, EllipsisVerticalIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ShipCrewAssignment } from "../models";
 import apiClient from "@/app/lib/api-client";
@@ -33,13 +29,18 @@ import { getAvatarUrl } from "@/app/lib/helpers";
 import { DateFormat } from "@/components/libs/moment";
 import CreateCrewDialog from "./createCrewDialog";
 import EditCrewDialog from "./editCrewDialog";
+import ComplianceScore from "@/components/app/complianceScore";
 
 export default function CrewSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
-  const [selectedAssignment, setSelectedAssignment] = useState<ShipCrewAssignment | undefined>();
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<
+    string | null
+  >(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<
+    ShipCrewAssignment | undefined
+  >();
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleDeleteClicked = (assignmentId: string) => {
@@ -59,9 +60,7 @@ export default function CrewSection({ shipId }: { shipId: string }) {
   const onDelete = async () => {
     if (!selectedAssignmentId) return;
     try {
-      await apiClient.delete(
-        `/ships/${shipId}/crew/${selectedAssignmentId}`
-      );
+      await apiClient.delete(`/ships/${shipId}/crew/${selectedAssignmentId}`);
       toast.success("Crew member removed successfully");
       setShowDelete(false);
       setSelectedAssignmentId(null);
@@ -83,13 +82,11 @@ export default function CrewSection({ shipId }: { shipId: string }) {
         <>
           {row.original.crew_member && (
             <div className="flex gap-2 items-center">
-              <Avatar
-                title={row.original.crew_member.name ?? ""}
-              >
+              <Avatar title={row.original.crew_member.name ?? ""}>
                 <AvatarImage
                   src={getAvatarUrl(
                     row.original.crew_member?.name ??
-                      row.original.crew_member?.email
+                      row.original.crew_member?.email,
                   )}
                 />
               </Avatar>
@@ -137,10 +134,14 @@ export default function CrewSection({ shipId }: { shipId: string }) {
       accessorKey: "created_at",
       header: "Assigned On",
       cell: ({ row }) => (
-        <DateFormat
-          date={row.original.created_at}
-          format="DD MMM YYYY"
-        />
+        <DateFormat date={row.original.created_at} format="DD MMM YYYY" />
+      ),
+    },
+    {
+      accessorKey: "compliance_score",
+      header: "Score",
+      cell: ({ row }) => (
+        <ComplianceScore score={row.original.compliance_score} />
       ),
     },
     {

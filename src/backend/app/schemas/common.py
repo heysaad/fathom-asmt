@@ -14,6 +14,7 @@ class ShipDto(BaseModel):
     description: str | None
     type: str
     created_at: datetime
+    compliance_score: int | None = None
 
 class UserDto(BaseModel):
     model_config = ConfigDict(from_attributes=True)

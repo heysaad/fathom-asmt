@@ -8,6 +8,7 @@ import apiClient from "@/app/lib/api-client";
 import { ShipVM } from "../models";
 import CrewTab from "../components/crewTab";
 import DrillsTab from "../components/drillsTab";
+import ComplianceScore from "@/components/app/complianceScore";
 
 export default function ShipPage({
   params,
@@ -53,19 +54,17 @@ export default function ShipPage({
             </div>
             <p className="text-sm mt-2">{ship.description}</p>
           </div>
+          <div className="size-14 border-4 rounded-full flex items-center justify-center text-xl font-bold">
+            <ComplianceScore score={ship.compliance_score} />
+          </div>
         </div>
 
-        <Tabs defaultValue="overview" className="mt-4">
+        <Tabs defaultValue="safety-crew" className="mt-4">
           <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="maintainance">Maintainance</TabsTrigger>
             <TabsTrigger value="safety-crew">Crew Members</TabsTrigger>
+            <TabsTrigger value="maintainance">Maintainance</TabsTrigger>
             <TabsTrigger value="drills">Safety Drills</TabsTrigger>
-            <TabsTrigger value="compliance">Compliance & Audits</TabsTrigger>
           </TabsList>
-          <TabsContent value="overview">
-            <p>Overview content goes here.</p>
-          </TabsContent>
           <TabsContent value="maintainance">
             <MaintainanceSection shipId={shipId} />
           </TabsContent>
@@ -74,9 +73,6 @@ export default function ShipPage({
           </TabsContent>
           <TabsContent value="safety-crew">
             <CrewTab shipId={shipId} />
-          </TabsContent>
-          <TabsContent value="compliance">
-            <p>Compliance & Audits content goes here.</p>
           </TabsContent>
         </Tabs>
       </div>

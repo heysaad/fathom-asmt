@@ -46,25 +46,19 @@ const data = {
       icon: <ShipWheelIcon />,
     },
     {
-      title: "Task",
+      title: "My Task",
       url: "/tasks",
-      icon: <ListTodoIcon />
+      icon: <ListTodoIcon />,
     },
     {
-      title: "Drills",
+      title: "My Drills",
       url: "/drills",
-      icon: <FlameIcon />
+      icon: <FlameIcon />,
     },
     {
-      title: "Admin",
-      url: "#",
+      title: "Users",
+      url: "/admin/users",
       icon: <ShieldUserIcon />,
-      items: [
-        {
-          title: "Users",
-          url: "/admin/users",
-        }
-      ],
     },
   ],
   projects: [
@@ -112,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={currentUser} />

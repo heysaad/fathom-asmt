@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.data.database import get_db
 from app.schemas.common import ShipDto, UserDto
+from app.services.event_triggers import EventTriggers
 
 router = APIRouter()
 
@@ -70,18 +71,28 @@ async def update_by_crew(
     req: UpdateCrewTaskRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    triggers: EventTriggers = Depends(EventTriggers)
 ):
-    task_query = await db.execute(
+    task = await db.scalar(
         select(MaintainanceTask).where(MaintainanceTask.id == req.id)
     )
-    task = task_query.scalar_one()
+
     if user.role != "admin" and task.assigned_to_id == user.id:
         raise HTTPException(
             status_code=403, detail="You don't have rights to update")
 
+    if req.status == "completed" and task.status != req.status:
+        task.completed_on = datetime.utcnow()
+
     task.status = req.status
-    task.description = req.description
+
+    if req.description is not None:
+        task.description = req.description
+
     await db.commit()
+    await db.refresh(task)
+
+    await triggers.on_task_done(task.id)
     return {"message": "updated"}
 
 
@@ -101,14 +112,15 @@ class TaskDto(BaseModel):
     type: str
     dueDate: datetime | None = Field(
         alias="due_date", serialization_alias="dueDate")
-    assignedToId: UUID | None = Field(None, 
-        alias="assigned_to_id", serialization_alias="assignedToId"
-    )
+    assignedToId: UUID | None = Field(None,
+                                      alias="assigned_to_id", serialization_alias="assignedToId"
+                                      )
     ship: Optional[ShipDto] = None
-    assignedTo: Optional[UserDto] = Field(None, alias="assigned_to", serialization_alias="assignedTo")
+    assignedTo: Optional[UserDto] = Field(
+        None, alias="assigned_to", serialization_alias="assignedTo")
 
 
 class UpdateCrewTaskRequest(BaseModel):
     id: UUID
     status: str
-    description: str
+    description: str | None = None

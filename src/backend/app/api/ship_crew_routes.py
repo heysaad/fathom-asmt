@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from operator import contains, iand
 from typing import Optional
@@ -29,6 +30,10 @@ class ShipCrewDto(BaseModel):
     crew_member: Optional[UserDto] = None
     is_active: bool | None = None
     created_at: datetime | None = None
+    drills_total: int | None = None
+    drills_attended: int | None = None
+    tasks_completed: int | None = None
+    compliance_score: int | None = None
 
 
 class ShipCrewDetailDto(ShipCrewDto):
@@ -167,7 +172,7 @@ async def get_crew_assignment_route(
     response_model=ShipCrewDetailDto,
 )
 async def update_crew_assignment_route(
-    ship_id: str, assignment_id: str, payload: UpdateShipCrewDto, db=Depends(get_db)
+    ship_id: str, assignment_id: str, payload: UpdateShipCrewDto, db: AsyncSession = Depends(get_db)
 ):
     """Update a crew assignment (e.g., activate/deactivate)"""
 
