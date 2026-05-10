@@ -139,7 +139,7 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
       cell: ({ row }) => (
         <span
           className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
-            row.original.status
+            row.original.status,
           )}`}
         >
           {row.original.status.replace("_", " ").toUpperCase()}
@@ -191,6 +191,14 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
       <PaginationTable
         key={refreshKey}
         url={`/ships/${shipId}/drills/list`}
+        headerLeft={
+          <div>
+            <h2 className="font-medium">Safety drills</h2>
+            <p className="text-sm text-muted-foreground">
+              Drill schedule, completion state, and assigned participants.
+            </p>
+          </div>
+        }
         actions={
           <Button type="button" onClick={addDrillClicked}>
             Create Drill

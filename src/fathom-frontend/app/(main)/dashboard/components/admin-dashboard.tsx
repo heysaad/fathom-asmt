@@ -194,8 +194,8 @@ export default function AdminDashboard() {
         eyebrow="Admin dashboard"
         title="Fleet overview"
         description="A quick look at fleet workload and safety follow-up."
-        actionHref="/admin/operations"
-        actionLabel="View all operations"
+        actionHref="/admin/tasks"
+        actionLabel="View all tasks"
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -238,7 +238,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link href="/admin/operations">All tasks</Link>
+            <Link href="/admin/tasks">All tasks</Link>
           </Button>
         </div>
         <PaginationTable
@@ -258,7 +258,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <Button asChild variant="outline" size="sm">
-            <Link href="/admin/operations">All drills</Link>
+            <Link href="/admin/drills">All drills</Link>
           </Button>
         </div>
         <PaginationTable

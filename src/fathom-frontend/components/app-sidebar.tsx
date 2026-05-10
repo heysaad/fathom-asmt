@@ -23,7 +23,6 @@ import {
   HomeIcon,
   FlameIcon,
   ListTodoIcon,
-  ClipboardListIcon,
 } from "lucide-react";
 import { config } from "@/app/lib/config";
 import { useUser } from "@/app/lib/user-context";
@@ -57,9 +56,15 @@ const data = {
       icon: <FlameIcon />,
     },
     {
-      title: "Operations",
-      url: "/admin/operations",
-      icon: <ClipboardListIcon />,
+      title: "All Tasks",
+      url: "/admin/tasks",
+      icon: <ListTodoIcon />,
+      adminOnly: true,
+    },
+    {
+      title: "All Drills",
+      url: "/admin/drills",
+      icon: <FlameIcon />,
       adminOnly: true,
     },
     {

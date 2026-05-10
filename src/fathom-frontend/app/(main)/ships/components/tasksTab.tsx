@@ -105,11 +105,18 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
 
   return (
     <div>
-      <div className="flex justify-end gap-3 mb-4"></div>
       {loading && <p className="py-10 text-center">Loading...</p>}
       {!loading && (
         <PaginationTable
           url={`/ships/${shipId}/tasks-paginated`}
+          headerLeft={
+            <div>
+              <h2 className="font-medium">Maintenance tasks</h2>
+              <p className="text-sm text-muted-foreground">
+                Planned and active work assigned to this vessel.
+              </p>
+            </div>
+          }
           actions={
             <Button type="button" onClick={addTaskClicked}>
               Add Task

@@ -182,6 +182,14 @@ export default function CrewSection({ shipId }: { shipId: string }) {
       <PaginationTable
         key={refreshKey}
         url={`/ships/${shipId}/crew/list`}
+        headerLeft={
+          <div>
+            <h2 className="font-medium">Crew members</h2>
+            <p className="text-sm text-muted-foreground">
+              Active crew assignments and individual compliance status.
+            </p>
+          </div>
+        }
         actions={
           <Button type="button" onClick={addCrewClicked}>
             Add Crew Member
