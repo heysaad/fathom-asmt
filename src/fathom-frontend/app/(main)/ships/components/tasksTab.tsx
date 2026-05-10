@@ -121,7 +121,7 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                 accessorKey: "title",
                 header: "Description",
                 cell: ({ row }) => (
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 max-w-72 whitespace-normal">
                     <div
                       className={`rounded-full h-4 w-1 bg-gray-100 mt-1 
                     ${
@@ -132,9 +132,9 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                           : "bg-orange-500"
                     }`}
                     ></div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       {row.original.title}
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground line-clamp-2">
                         {row.original.description}
                       </div>
                     </div>

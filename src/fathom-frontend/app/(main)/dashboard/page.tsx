@@ -1,13 +1,25 @@
+"use client";
+
+import { Loader2Icon } from "lucide-react";
+
+import { useUser } from "@/app/lib/user-context";
+import AdminDashboard from "./components/admin-dashboard";
+import CrewDashboardView from "./components/crew-dashboard";
 
 export default function Page() {
-  return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-      <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-        <div className="aspect-video rounded-xl bg-muted/50" />
-        <div className="aspect-video rounded-xl bg-muted/50" />
-        <div className="aspect-video rounded-xl bg-muted/50" />
+  const { user, loading } = useUser();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-80 items-center justify-center">
+        <Loader2Icon className="size-8 animate-spin text-muted-foreground" />
       </div>
-      <div className="min-h-screen flex-1 rounded-xl bg-muted/50 md:min-h-min" />
-    </div>
-  );
+    );
+  }
+
+  if (user?.role === "crew") {
+    return <CrewDashboardView />;
+  }
+
+  return <AdminDashboard />;
 }

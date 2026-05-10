@@ -23,6 +23,7 @@ import {
   HomeIcon,
   FlameIcon,
   ListTodoIcon,
+  ClipboardListIcon,
 } from "lucide-react";
 import { config } from "@/app/lib/config";
 import { useUser } from "@/app/lib/user-context";
@@ -56,9 +57,16 @@ const data = {
       icon: <FlameIcon />,
     },
     {
+      title: "Operations",
+      url: "/admin/operations",
+      icon: <ClipboardListIcon />,
+      adminOnly: true,
+    },
+    {
       title: "Users",
       url: "/admin/users",
       icon: <ShieldUserIcon />,
+      adminOnly: true,
     },
   ],
   projects: [
@@ -90,6 +98,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: getAvatarUrl(user.name ?? user.email),
       }
     : data.user;
+  const navItems = data.navMain.filter(
+    (item) => !item.adminOnly || user?.role === "admin",
+  );
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -105,7 +116,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navItems} />
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>

@@ -37,11 +37,11 @@ export default function DrillsPage() {
       cell: ({ row }) => (
         <div
           onClick={() => handleItemClick(row.original)}
-          className="cursor-pointer"
+          className="cursor-pointer whitespace-normal line-clamp-4"
         >
           <div className="text-xs text-muted-foreground">{row.original.type.charAt(0).toUpperCase() + row.original.type.slice(1)}</div>
           {row.original.title}
-          {row.original.description && <div>{row.original.description}</div>}
+          {row.original.description && <div className="text-xs text-muted-foreground">{row.original.description}</div>}
         </div>
       ),
     },
@@ -59,9 +59,9 @@ export default function DrillsPage() {
                 className="size-8 border rounded-lg"
               />
             )}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {row.original.ship?.name}
-              <div className="text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground truncate">
                 {row.original.ship?.type} • {row.original.ship?.imo}
               </div>
             </div>

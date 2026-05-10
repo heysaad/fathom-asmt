@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.infra.data.models.Ship import MaintainanceTask, Ship
 from app.services.paginator import PaginationRequest, Paginator
 from app.infra.auth.users import get_current_user
+from app.infra.auth.role_checker import RoleChecker
 from app.infra.data.models.User import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,9 +23,14 @@ router = APIRouter()
 
 @router.post("/paginated")
 async def get_paginated_list(
-    req: PaginationRequest[FilterVM], paginator: Paginator = Depends()
+    req: PaginationRequest[FilterVM],
+    paginator: Paginator = Depends(),
+    user: User = Depends(RoleChecker(["admin"])),
 ):
-    query = select(MaintainanceTask)
+    query = select(MaintainanceTask).options(
+        joinedload(MaintainanceTask.ship),
+        joinedload(MaintainanceTask.assigned_to),
+    )
     filters = req.filters
     if req.search:
         query = query.where(MaintainanceTask.title.icontains(req.search))
@@ -34,6 +40,12 @@ async def get_paginated_list(
 
     if filters and filters.status:
         query = query.where(MaintainanceTask.status == filters.status)
+
+    if filters and filters.dateFrom:
+        query = query.where(MaintainanceTask.due_date >= filters.dateFrom)
+
+    if filters and filters.dateTo:
+        query = query.where(MaintainanceTask.due_date <= filters.dateTo)
 
     paged = await paginator.get_paginated(
         req, query.order_by(MaintainanceTask.created_at.desc())
@@ -59,6 +71,12 @@ async def get_my_tasks(
 
     if filters and filters.status:
         query = query.where(MaintainanceTask.status == filters.status)
+
+    if filters and filters.dateFrom:
+        query = query.where(MaintainanceTask.due_date >= filters.dateFrom)
+
+    if filters and filters.dateTo:
+        query = query.where(MaintainanceTask.due_date <= filters.dateTo)
 
     paged = await paginator.get_paginated(
         req, query.order_by(MaintainanceTask.created_at.desc())
@@ -99,6 +117,8 @@ async def update_by_crew(
 class FilterVM(BaseModel):
     userId: UUID | None = None
     status: str | None = None
+    dateFrom: datetime | None = None
+    dateTo: datetime | None = None
 
 
 class TaskDto(BaseModel):
