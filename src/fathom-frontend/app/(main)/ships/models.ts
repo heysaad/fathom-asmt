@@ -52,4 +52,5 @@ export interface DrillAssignment {
     is_completed: boolean;
     attended_at?: string;
     remarks?: string;
+    crew_member?: UserVM
 }

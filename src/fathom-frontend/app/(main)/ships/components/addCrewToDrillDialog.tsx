@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserInput } from "@/components/user-input";
 
 interface AddCrewToDrillDialogProps {
   open: boolean;
@@ -42,27 +43,6 @@ export default function AddCrewToDrillDialog({
   const [loading, setLoading] = useState(false);
   const [loadingCrew, setLoadingCrew] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      loadCrewMembers();
-    }
-  }, [open]);
-
-  const loadCrewMembers = async () => {
-    setLoadingCrew(true);
-    try {
-      const response = await apiClient.get<{
-        data: ShipCrewAssignment[];
-        total: number;
-      }>(`/ships/${shipId}/crew?pageSize=100`);
-      setCrewMembers(response.data.data);
-    } catch (error) {
-      toast.error("Failed to load crew members");
-    } finally {
-      setLoadingCrew(false);
-    }
-  };
-
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCrewId) {
@@ -73,7 +53,7 @@ export default function AddCrewToDrillDialog({
     setLoading(true);
     try {
       await apiClient.post(`/ships/${shipId}/drills/${drillId}/assignments`, {
-        ship_crew_assignment_id: selectedCrewId,
+        crew_id: selectedCrewId,
       });
       toast.success("Crew member assigned to drill");
       onOpenChange(false);
@@ -103,21 +83,7 @@ export default function AddCrewToDrillDialog({
         <form onSubmit={onSubmit} className="space-y-3">
           <Field>
             <FieldLabel>Select Crew Member</FieldLabel>
-            <Select
-              value={selectedCrewId}
-              onValueChange={setSelectedCrewId}
-            >
-              <SelectTrigger disabled={loadingCrew || loading}>
-                <SelectValue placeholder="Select a crew member" />
-              </SelectTrigger>
-              <SelectContent>
-                {crewMembers.map((crew) => (
-                  <SelectItem key={crew.id} value={crew.id}>
-                    {crew.crew_member?.name || crew.crew_member?.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <UserInput value={selectedCrewId} onValueChange={setSelectedCrewId} />
           </Field>
 
           <DialogFooter>

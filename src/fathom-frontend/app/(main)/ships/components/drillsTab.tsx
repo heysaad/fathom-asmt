@@ -190,7 +190,7 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
     <div>
       <PaginationTable
         key={refreshKey}
-        url={`/ships/${shipId}/drills`}
+        url={`/ships/${shipId}/drills/list`}
         actions={
           <Button type="button" onClick={addDrillClicked}>
             Create Drill

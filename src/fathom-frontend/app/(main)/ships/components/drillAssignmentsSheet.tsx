@@ -40,6 +40,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/app/lib/helpers";
 import AddCrewToDrillDialog from "./addCrewToDrillDialog";
 import EditDrillAssignmentDialog from "./editDrillAssignmentDialog";
+import { UserBadge, UserBadgeSm } from "@/components/app/userBadge";
 
 interface DrillAssignmentsSheetProps {
   open: boolean;
@@ -94,11 +95,12 @@ export default function DrillAssignmentsSheet({
 
   const columns: ColumnDef<DrillAssignment>[] = [
     {
-      accessorKey: "ship_crew_assignment_id",
+      accessorKey: "",
       header: "Crew Member",
       cell: ({ row }) => (
         <div className="text-sm">
-          <div className="font-medium">{row.original.ship_crew_assignment_id}</div>
+          {row.original.crew_member && <UserBadgeSm data={row.original.crew_member} />}
+          {row.original.remarks}
         </div>
       ),
     },
@@ -107,37 +109,12 @@ export default function DrillAssignmentsSheet({
       header: "Attended",
       cell: ({ row }) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            row.original.is_attended
-              ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
+          className={`px-2 py-1 text-xs rounded-full ${row.original.is_attended
+            ? "bg-green-100 text-green-800"
+            : "bg-gray-100 text-gray-800"
+            }`}
         >
           {row.original.is_attended ? "Yes" : "No"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "is_completed",
-      header: "Completed",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            row.original.is_completed
-              ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {row.original.is_completed ? "Yes" : "No"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "remarks",
-      header: "Remarks",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {row.original.remarks || "-"}
         </span>
       ),
     },
@@ -188,7 +165,7 @@ export default function DrillAssignmentsSheet({
           <div className="mt-6">
             <PaginationTable
               key={refreshKey}
-              url={`/ships/${shipId}/drills/${drill.id}/assignments`}
+              url={`/ships/${shipId}/drills/${drill.id}/assignments/list`}
               actions={
                 <Button
                   type="button"

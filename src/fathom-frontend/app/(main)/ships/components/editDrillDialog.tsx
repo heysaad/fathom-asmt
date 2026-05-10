@@ -119,31 +119,32 @@ export default function EditDrillDialog({
               />
             </Field>
 
-            <Field>
-              <FieldLabel>Scheduled Date & Time</FieldLabel>
-              <Input
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={(e) => setScheduledAt(e.target.value)}
-                disabled={loading}
-              />
-            </Field>
-
-            <Field>
-              <FieldLabel>Status</FieldLabel>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger disabled={loading}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DRILL_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel>Scheduled Date & Time</FieldLabel>
+                <Input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  disabled={loading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Status</FieldLabel>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger disabled={loading}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DRILL_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
 
             <Field>
               <FieldLabel>Notes</FieldLabel>

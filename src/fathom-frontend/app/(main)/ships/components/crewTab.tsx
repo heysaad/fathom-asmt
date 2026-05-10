@@ -180,7 +180,7 @@ export default function CrewSection({ shipId }: { shipId: string }) {
     <div>
       <PaginationTable
         key={refreshKey}
-        url={`/ships/${shipId}/crew`}
+        url={`/ships/${shipId}/crew/list`}
         actions={
           <Button type="button" onClick={addCrewClicked}>
             Add Crew Member

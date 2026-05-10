@@ -103,19 +103,6 @@ export default function EditDrillAssignmentDialog({
             </Field>
 
             <Field>
-              <FieldLabel>Completed</FieldLabel>
-              <Select value={isCompleted} onValueChange={setIsCompleted}>
-                <SelectTrigger disabled={loading}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Yes</SelectItem>
-                  <SelectItem value="false">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
               <FieldLabel>Remarks</FieldLabel>
               <Textarea
                 placeholder="Enter remarks"
