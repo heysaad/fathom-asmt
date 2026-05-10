@@ -16,6 +16,7 @@ import CreateShipDialog, {
 } from "./components/createShipDialog";
 import { ShipVM } from "./models";
 import ShipImg from "./components/shipImg";
+import ComplianceScore from "@/components/app/complianceScore";
 
 export default function ShipsPage() {
   const [ships, setShips] = React.useState<ShipVM[]>([]);
@@ -73,6 +74,20 @@ export default function ShipsPage() {
               </Link>
             ),
           },
+          {
+            accessorKey: "compliance_score",
+            header: "Compliance Score",
+            cell: ({ row }) => <ComplianceScore score={row.original.compliance_score} />
+          },
+          {
+            accessorKey: "actions",
+            header: "",
+            cell: ({ row }) => <div className="flex gap-2 items-center justify-end">
+              <Button variant={"outline"} size={"sm"}>
+                <Link href={`/ships/${row.original.id}`}>View</Link>
+              </Button>
+            </div>
+          }
         ]}
         data={ships}
       />

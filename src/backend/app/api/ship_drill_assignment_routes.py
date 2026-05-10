@@ -13,6 +13,7 @@ from app.services.paginator import PaginationRequest, PaginationResponse, Pagina
 from app.infra.data.database import get_db
 from app.schemas.common import DrillDto
 from app.api.ship_crew_routes import ShipCrewDto
+from app.services.event_triggers import EventTriggers
 
 router = APIRouter()
 
@@ -56,6 +57,7 @@ async def create_drill_assignment_route(
     drill_id: UUID,
     payload: CreateDrillAssignmentDto,
     db: AsyncSession = Depends(get_db),
+    triggers: EventTriggers = Depends(EventTriggers)
 ):
     """Assign a crew member to a drill"""
 
@@ -144,7 +146,7 @@ async def get_drill_assignments_route(
         select(DrillAssignment)
         .options(
             joinedload(DrillAssignment.ship_crew_assignment)
-                .joinedload(ShipCrewAssignment.crew_member)
+            .joinedload(ShipCrewAssignment.crew_member)
         )
         .where(and_(*filters))
         .order_by(DrillAssignment.assigned_at.desc())
@@ -165,21 +167,22 @@ async def update_drill_assignment_route(
     drill_id: str,
     assignment_id: str,
     payload: UpdateDrillAssignmentDto,
-    db=Depends(get_db),
+    db: AsyncSession = Depends(get_db),
+    triggers: EventTriggers = Depends(EventTriggers)
 ):
     """Update a drill assignment"""
 
     # Verify drill exists
-    drill_result = await db.execute(
+    drill_result = await db.scalar(
         select(Drill).where(and_(Drill.id == drill_id, Drill.ship_id == ship_id))
     )
 
-    if not drill_result.scalar_one_or_none():
+    if not drill_result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Drill not found"
         )
 
-    result = await db.execute(
+    assignment = await db.scalar(
         select(DrillAssignment).where(
             and_(
                 DrillAssignment.id == assignment_id,
@@ -187,8 +190,6 @@ async def update_drill_assignment_route(
             )
         )
     )
-
-    assignment = result.scalar_one_or_none()
 
     if not assignment:
         raise HTTPException(
@@ -209,6 +210,8 @@ async def update_drill_assignment_route(
 
     await db.commit()
     await db.refresh(assignment)
+
+    await triggers.on_drill_done(drill_id)
 
     return DrillAssignmentDto.model_validate(assignment)
 

@@ -94,6 +94,15 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
     setOpenEdit(true);
   };
 
+  const setStatus = async (data: MaintenanceRecord, status: string) => {
+    await apiClient.post(`/tasks/update-by-crew`, {
+      id: data.id,
+      status: status,
+    });
+    toast.success("Started task");
+    await loadData();
+  };
+
   return (
     <div>
       <div className="flex justify-end gap-3 mb-4"></div>
@@ -199,11 +208,16 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                 header: "",
                 cell: ({ row }) => (
                   <div className="flex gap-2 items-center justify-end">
-                    {row.original.assignedToId == user?.id && (
-                      <Button variant={"outline"} size={"xs"}>
-                        Start
-                      </Button>
-                    )}
+                    {row.original.assignedToId == user?.id &&
+                      row.original.status == "scheduled" && (
+                        <Button
+                          variant={"outline"}
+                          size={"xs"}
+                          onClick={() => setStatus(row.original, "in_progress")}
+                        >
+                          Start
+                        </Button>
+                      )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost">

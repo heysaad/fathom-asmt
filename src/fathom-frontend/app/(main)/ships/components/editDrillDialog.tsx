@@ -36,8 +36,6 @@ const DRILL_STATUSES = [
   { value: "scheduled", label: "Scheduled" },
   { value: "in_progress", label: "In Progress" },
   { value: "completed", label: "Completed" },
-  { value: "missed", label: "Missed" },
-  { value: "cancelled", label: "Cancelled" },
 ];
 
 const DRILL_TYPES = [

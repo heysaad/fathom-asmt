@@ -1,5 +1,5 @@
 from app.infra.data.base import Base
-from sqlalchemy import Boolean, ForeignKey
+from sqlalchemy import Boolean, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
@@ -21,6 +21,9 @@ class Ship(Base):
     description: Mapped[str] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
 
+    # compliance
+    compliance_score: Mapped[int] = mapped_column(Integer, nullable=True)
+
     # Relationships
     crew_assignments: Mapped[List["ShipCrewAssignment"]] = relationship(
         back_populates="ship", lazy="noload"
@@ -28,7 +31,8 @@ class Ship(Base):
     maintenance_tasks: Mapped[List["MaintainanceTask"]] = relationship(
         back_populates="ship", lazy="noload"
     )
-    drills: Mapped[List["Drill"]] = relationship(back_populates="ship", lazy="noload")
+    drills: Mapped[List["Drill"]] = relationship(
+        back_populates="ship", lazy="noload")
 
 
 class ShipCrewAssignment(Base):
@@ -43,11 +47,21 @@ class ShipCrewAssignment(Base):
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=True, default=True)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=True, default=True)
+
+    # compliance
+    drills_total: Mapped[int] = mapped_column(Integer, nullable=True)
+    drills_attended: Mapped[int] = mapped_column(Integer, nullable=True)
+    tasks_total: Mapped[int] = mapped_column(Integer, nullable=True)
+    tasks_completed: Mapped[int] = mapped_column(Integer, nullable=True)
+    compliance_score: Mapped[int] = mapped_column(Integer, nullable=True)
 
     # Relationships
-    ship: Mapped["Ship"] = relationship(back_populates="crew_assignments", lazy="noload")
-    crew_member: Mapped["User"] = relationship(back_populates="crew_assignments", lazy="noload")
+    ship: Mapped["Ship"] = relationship(
+        back_populates="crew_assignments", lazy="noload")
+    crew_member: Mapped["User"] = relationship(
+        back_populates="crew_assignments", lazy="noload")
     drill_assignments: Mapped[List["DrillAssignment"]] = relationship(
         back_populates="ship_crew_assignment", lazy="noload"
     )
@@ -68,14 +82,17 @@ class MaintainanceTask(Base):
     # pending, in_progress, completed
     status: Mapped[str] = mapped_column(default="scheduled")
     due_date: Mapped[datetime] = mapped_column(nullable=True)
+    completed_on: Mapped[datetime] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
     assigned_to_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=True
     )
 
     # Relationships
-    ship: Mapped["Ship"] = relationship(back_populates="maintenance_tasks", lazy="noload")
-    assigned_to: Mapped["User"] = relationship(back_populates="assigned_tasks", lazy="noload")
+    ship: Mapped["Ship"] = relationship(
+        back_populates="maintenance_tasks", lazy="noload")
+    assigned_to: Mapped["User"] = relationship(
+        back_populates="assigned_tasks", lazy="noload")
 
 
 class Drill(Base):
@@ -93,7 +110,7 @@ class Drill(Base):
     started_at: Mapped[datetime] = mapped_column(nullable=True)
     completed_at: Mapped[datetime] = mapped_column(nullable=True)
     status: Mapped[str] = mapped_column(default="scheduled")
-    # scheduled, in_progress, completed, missed, cancelled
+    # scheduled, in_progress, completed, missed
     notes: Mapped[str] = mapped_column(nullable=True)
     created_by: Mapped[str] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=True
@@ -102,7 +119,8 @@ class Drill(Base):
 
     # Relationships
     ship: Mapped["Ship"] = relationship(back_populates="drills", lazy="noload")
-    created_by_user: Mapped["User"] = relationship(back_populates="created_drills", lazy="noload")
+    created_by_user: Mapped["User"] = relationship(
+        back_populates="created_drills", lazy="noload")
     assignments: Mapped[List["DrillAssignment"]] = relationship(
         back_populates="drill", lazy="noload"
     )
@@ -126,7 +144,8 @@ class DrillAssignment(Base):
     remarks: Mapped[str] = mapped_column(nullable=True)
 
     # Relationships
-    drill: Mapped["Drill"] = relationship(back_populates="assignments", lazy="noload")
+    drill: Mapped["Drill"] = relationship(
+        back_populates="assignments", lazy="noload")
     ship_crew_assignment: Mapped["ShipCrewAssignment"] = relationship(
         back_populates="drill_assignments", lazy="noload"
     )

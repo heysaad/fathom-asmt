@@ -12,22 +12,26 @@ from app.api.tasks_routes import FilterVM, TaskDto
 from app.infra.data.models.User import User
 from app.api.user_routes import UserDto
 from app.schemas.common import ShipDto
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.event_triggers import EventTriggers
 
 router = APIRouter()
 
+
 @router.get("", summary="Get ships")
-async def get_ship_routes(db=Depends(get_db)):
+async def get_ship_routes(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Ship).order_by(Ship.created_at.desc()).limit(10))
     data = result.scalars().all()
     return TypeAdapter(list[ShipDto]).validate_python(data)
 
 
 @router.post("", summary="Create a ship")
-async def create_ship_route(req: CreateShipRequest, db=Depends(get_db)):
+async def create_ship_route(req: CreateShipRequest,
+                            db: AsyncSession = Depends(get_db)):
     ship = Ship(
-        name=req.name, 
-        type="Container Ship", 
-        imo=req.imo, 
+        name=req.name,
+        type="Container Ship",
+        imo=req.imo,
         description=req.description
     )
     db.add(ship)
@@ -47,7 +51,7 @@ class CreateShipResponse(BaseModel):
 
 
 @router.get("/{ship_id}", summary="Get ship details")
-async def get_ship_details_route(ship_id: str, db=Depends(get_db)):
+async def get_ship_details_route(ship_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Ship).where(Ship.id == ship_id))
     ship = result.scalar_one_or_none()
     if not ship:
@@ -61,7 +65,10 @@ async def get_ship_details_route(ship_id: str, db=Depends(get_db)):
     summary="Create a maintainance task for a ship"
 )
 async def add_task_route(
-    ship_id: UUID, req: CreateMaintainanceTaskRequest, db=Depends(get_db)
+    ship_id: UUID,
+    req: CreateMaintainanceTaskRequest,
+    db: AsyncSession = Depends(get_db),
+    triggers: EventTriggers = Depends(EventTriggers)
 ):
     task = MaintainanceTask(
         ship_id=ship_id,
@@ -74,13 +81,16 @@ async def add_task_route(
     db.add(task)
     await db.commit()
     await db.refresh(task)
+
+    await triggers.on_task_created(task.id)
+
     return CreateMaintainanceTaskResponse(id=task.id)
 
 
 @router.get(
     "/{ship_id}/maintainance-tasks", summary="Get maintainance tasks for a ship"
 )
-async def get_maintainance_tasks_route(ship_id: UUID, db=Depends(get_db)):
+async def get_maintainance_tasks_route(ship_id: UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(MaintainanceTask)
         .where(MaintainanceTask.ship_id == ship_id)
@@ -106,7 +116,7 @@ async def get_paginated_list(ship_id: UUID, req: PaginationRequest[FilterVM], pa
     if filters and filters.status:
         query = query.where(MaintainanceTask.status == filters.status)
 
-    paged = await paginator.get_paginated(req, query.order_by(MaintainanceTask.created_at.desc()))
+    paged = await paginator.get_paginated(req, query.order_by(MaintainanceTask.due_date.asc()))
     return paged.to_dto(TaskDto)
 
 
@@ -114,7 +124,10 @@ async def get_paginated_list(ship_id: UUID, req: PaginationRequest[FilterVM], pa
     "/{ship_id}/maintainance-tasks/{task_id}", summary="Delete a maintainance task"
 )
 async def delete_maintainance_task_route(
-    ship_id: str, task_id: str, db=Depends(get_db)
+    ship_id: str, 
+    task_id: str, 
+    db: AsyncSession = Depends(get_db),
+    triggers: EventTriggers = Depends(EventTriggers)
 ):
     result = await db.execute(
         select(MaintainanceTask).where(
@@ -126,7 +139,10 @@ async def delete_maintainance_task_route(
         return {"error": "Task not found"}
     await db.delete(task)
     await db.commit()
+
+    await triggers.refresh_by_shipid(ship_id)
     return {"message": "Task deleted successfully"}
+
 
 class CreateMaintainanceTaskRequest(BaseModel):
     title: str

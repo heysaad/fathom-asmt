@@ -6,6 +6,7 @@ export interface ShipVM {
     imo: string;
     type?: string;
     description?: string;
+    compliance_score?: number;
 }
 
 export interface MaintenanceRecord {
@@ -28,6 +29,10 @@ export interface ShipCrewAssignment {
     is_active: boolean;
     created_at: string;
     crew_member?: UserVM;
+    drills_total?: number
+    drills_attended?: number
+    tasks_completed?: number
+    compliance_score?: number
 }
 
 export interface Drill {
