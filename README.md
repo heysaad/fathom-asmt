@@ -6,13 +6,13 @@
 
 Full-stack maritime operations and compliance system for managing ship maintenance, safety drills, crew activity, and compliance risk.
 
-[![Next.js][next-shield]][next-url]
-[![React][react-shield]][react-url]
-[![FastAPI][fastapi-shield]][fastapi-url]
-[![PostgreSQL][postgres-shield]][postgres-url]
-[![Docker][docker-shield]][docker-url]
+
+[![Tech Stack](https://skillicons.dev/icons?i=ts,nextjs,react,tailwind,fastapi,python,postgres,docker)](https://skillicons.dev)
 
 [Live Demo](https://fathom-asmt.vercel.app/) | [API Health](http://localhost:8000/health) | [Assessment Scope](docs/scope.md)
+
+
+[![CI][ci-shield]][ci-url]
 
 </div>
 
@@ -34,13 +34,12 @@ Full-stack maritime operations and compliance system for managing ship maintenan
   </ol>
 </details>
 
+
 ## About The Project
 
 Fathom Marine Assessment is a role-aware maritime operations platform built for a software developer assessment. It helps a marine organization track operational readiness across ships by connecting maintenance tasks, safety drills, crew assignments, and compliance scoring in one dashboard.
 
 The application supports admin workflows for managing ships, users, tasks, drills, and crew assignments, while crew members can view assigned work, update maintenance progress, and mark drill attendance.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Features
 
@@ -54,9 +53,9 @@ The application supports admin workflows for managing ships, users, tasks, drill
 - Docker Compose setup for frontend, API, and PostgreSQL
 - CI checks for backend tests, frontend build, and Docker image builds
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ## Built With
+
+[![Tech Stack](https://skillicons.dev/icons?i=ts,nextjs,react,tailwind,fastapi,python,postgres,docker)](https://skillicons.dev)
 
 - [Next.js 16][next-url]
 - [React 19][react-url]
@@ -68,8 +67,6 @@ The application supports admin workflows for managing ships, users, tasks, drill
 - [Alembic][alembic-url]
 - [PostgreSQL 16][postgres-url]
 - [Docker Compose][docker-url]
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Architecture
 
@@ -91,7 +88,6 @@ PostgreSQL :5432
 
 The frontend is a Next.js App Router application with reusable UI components, dashboard views, admin screens, and authenticated API calls. The backend is a FastAPI service using SQLAlchemy models, Alembic migrations, JWT authentication through FastAPI Users, and background compliance recalculation hooks.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Getting Started
 
@@ -148,8 +144,6 @@ This starts the complete local stack:
 
 5. Open http://localhost:3000.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ## Demo Data
 
 On first startup, the API seeds demo data when the database is empty:
@@ -174,8 +168,6 @@ Demo accounts:
 | Captain | captain@fathom.com |
 | Officer | officer@fathom.com |
 | Bosun | bosun@fathom.com |
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Development
 
@@ -208,8 +200,6 @@ npm run lint
 npm run build
 ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ## Project Structure
 
 ```text
@@ -235,8 +225,6 @@ npm run build
 `-- README.md
 ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ## API Surface
 
 The FastAPI service exposes REST routes for:
@@ -250,8 +238,6 @@ The FastAPI service exposes REST routes for:
 
 When running locally, interactive API documentation is available at http://localhost:8000/docs.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ## Deployment
 
 The current demo is deployed at [fathom-asmt.vercel.app](https://fathom-asmt.vercel.app/). The repository also includes Dockerfiles for the frontend and backend plus a root `docker-compose.yml` for local orchestration.
@@ -262,17 +248,12 @@ CI runs on pushes to `main` and pull requests:
 - Frontend dependency install and production build
 - Docker Compose image build
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-[next-shield]: https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
+[ci-shield]: https://github.com/heysaad/fathom-asmt/actions/workflows/ci.yml/badge.svg
+[ci-url]: https://github.com/heysaad/fathom-asmt/actions/workflows/ci.yml
 [next-url]: https://nextjs.org/
-[react-shield]: https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=000000
 [react-url]: https://react.dev/
-[fastapi-shield]: https://img.shields.io/badge/FastAPI-0.111+-009688?style=for-the-badge&logo=fastapi&logoColor=white
 [fastapi-url]: https://fastapi.tiangolo.com/
-[postgres-shield]: https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white
 [postgres-url]: https://www.postgresql.org/
-[docker-shield]: https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white
 [docker-url]: https://www.docker.com/
 [typescript-url]: https://www.typescriptlang.org/
 [tailwind-url]: https://tailwindcss.com/
