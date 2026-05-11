@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
@@ -54,7 +54,7 @@ async def create_ship_route(req: CreateShipRequest,
                             db: AsyncSession = Depends(get_db)):
     ship = Ship(
         name=req.name,
-        type="Container Ship",
+        type=req.type,
         imo=req.imo,
         description=req.description
     )
@@ -66,8 +66,16 @@ async def create_ship_route(req: CreateShipRequest,
 
 class CreateShipRequest(BaseModel):
     name: str
-    imo: str
+    type: str
+    imo: str | None = None
     description: str | None
+
+
+class UpdateShipRequest(BaseModel):
+    name: str | None = None
+    type: str | None = None
+    imo: str | None = None
+    description: str | None = None
 
 
 class ShipFilterVM(BaseModel):
@@ -84,6 +92,38 @@ async def get_ship_details_route(ship_id: str, db: AsyncSession = Depends(get_db
     ship = result.scalar_one_or_none()
     if not ship:
         return {"error": "Ship not found"}
+    return TypeAdapter(ShipDto).validate_python(ship)
+
+
+@router.put("/{ship_id}", summary="Update ship details")
+async def update_ship_route(
+    ship_id: UUID,
+    req: UpdateShipRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    ship = await db.scalar(select(Ship).where(Ship.id == ship_id))
+
+    if not ship:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ship not found",
+        )
+
+    if req.name is not None:
+        ship.name = req.name
+
+    if req.type is not None:
+        ship.type = req.type
+
+    if req.imo is not None:
+        ship.imo = req.imo
+
+    if req.description is not None:
+        ship.description = req.description
+
+    await db.commit()
+    await db.refresh(ship)
+
     return TypeAdapter(ShipDto).validate_python(ship)
 
 

@@ -8,6 +8,7 @@ import {
   ClipboardListIcon,
   FlameIcon,
   Loader2Icon,
+  PencilIcon,
   UsersIcon,
 } from "lucide-react";
 
@@ -20,6 +21,9 @@ import MaintainanceSection from "../components/tasksTab";
 import ShipImg from "../components/shipImg";
 import type { ShipVM } from "../models";
 import { useSearchParams } from "next/navigation";
+import EditShipDialog from "../components/editShipDialog";
+import { canAddDrill } from "@/app/lib/permissions";
+import { useUser } from "@/app/lib/user-context";
 
 function CompliancePanel({ score }: { score?: number }) {
   const value = score ?? 0;
@@ -35,7 +39,9 @@ function CompliancePanel({ score }: { score?: number }) {
     <div className="w-full max-w-56">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-muted-foreground">Compliance</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Compliance
+          </p>
           <p className={`mt-1 text-3xl font-semibold tracking-tight ${tone}`}>
             {value}%
           </p>
@@ -60,8 +66,10 @@ export default function ShipPage({
   const { id: shipId } = use(params);
   const [ship, setShip] = React.useState<ShipVM | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [editOpen, setEditOpen] = React.useState(false);
   const searchParams = useSearchParams();
-  const queryTab = searchParams.get('tab')
+  const queryTab = searchParams.get("tab");
+  const { user } = useUser();
 
   useEffect(() => {
     const loadData = async () => {
@@ -104,13 +112,20 @@ export default function ShipPage({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <div>
+      <div className="flex justify-between">
         <Button asChild variant="ghost" size="sm">
           <Link href="/ships">
             <ArrowLeftIcon className="size-4" />
             Ships
           </Link>
         </Button>
+
+        {canAddDrill(user) && (
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <PencilIcon className="size-4" />
+            Edit details
+          </Button>
+        )}
       </div>
 
       <section className="flex flex-col gap-6 border-b pb-6 lg:flex-row lg:items-start lg:justify-between">
@@ -136,7 +151,8 @@ export default function ShipPage({
               {ship.name}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {ship.description || "No description has been added for this ship."}
+              {ship.description ||
+                "No description has been added for this ship."}
             </p>
           </div>
         </div>
@@ -172,6 +188,13 @@ export default function ShipPage({
           <CrewTab shipId={shipId} />
         </TabsContent>
       </Tabs>
+
+      <EditShipDialog
+        open={editOpen}
+        setOpen={setEditOpen}
+        ship={ship}
+        onSave={setShip}
+      />
     </div>
   );
 }
