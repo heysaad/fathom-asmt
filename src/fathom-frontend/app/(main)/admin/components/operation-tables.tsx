@@ -17,6 +17,7 @@ import EditTaskDialog from "../../maintainance/components/editTaskDialog";
 import EditDrillDialog from "../../ships/components/editDrillDialog";
 import ShipImg from "../../ships/components/shipImg";
 import type { Drill, MaintenanceRecord } from "../../ships/models";
+import { DrillStatusBadge, TaskStatusBadge } from "@/components/app/drillStatusBadge";
 
 type StatusFilter = {
   status?: string;
@@ -122,7 +123,7 @@ export function AdminTasksTable() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <TaskStatusBadge task={row.original} />,
     },
   ] as ColumnDef<MaintenanceRecord>[];
 
@@ -244,7 +245,7 @@ export function AdminDrillsTable() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <DrillStatusBadge drill={row.original} />,
     },
   ] as ColumnDef<Drill>[];
 
