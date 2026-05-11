@@ -9,7 +9,7 @@ export type UserInfo = {
   name?: string;
   is_active?: boolean;
   is_verified?: boolean;
-  role?: "crew" | "admin"
+  role?: "crew" | "admin";
 };
 
 type UserContextType = {
@@ -21,12 +21,12 @@ type UserContextType = {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserInfo | null>(null);
+  const [user, setUser] = useState<UserInfo>();
   const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
 
     setLoading(true);
     try {
@@ -34,7 +34,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setUser(response.data);
     } catch (error) {
       console.error("Failed to load current user", error);
-      setUser(null);
+      setUser(undefined);
     } finally {
       setLoading(false);
     }
@@ -46,10 +46,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({ user, loading, refreshUser }),
-    [user, loading]
+    [user, loading],
   );
 
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={value || undefined}>
+      {children}
+    </UserContext.Provider>
+  );
 }
 
 export function useUser() {
