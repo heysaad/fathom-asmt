@@ -12,9 +12,9 @@ import apiClient from "@/app/lib/api-client";
 import { PaginationTable } from "@/components/paginationTable";
 import { Button } from "@/components/ui/button";
 import { FromCalendar } from "@/components/libs/moment";
+import { TaskDueDate } from "@/components/app/taskDueDate";
 import ShipImg from "../../ships/components/shipImg";
-import type { Drill, MaintenanceRecord, ShipVM } from "../../ships/models";
-import { StatusBadge } from "@/components/ui/badge";
+import type { Drill, MaintenanceRecord } from "../../ships/models";
 import { DashboardHeader, MetricCard } from "./dashboard-utils";
 import type { PagedResponse } from "./dashboard-utils";
 import { DrillStatusBadge, TaskStatusBadge } from "@/components/app/drillStatusBadge";
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
       header: "Task",
       cell: ({ row }) => (
         <div className="max-w-72 whitespace-normal">
-          {row.original.dueDate && <FromCalendar date={row.original.dueDate} />}
+          <TaskDueDate task={row.original} />
           <p className="font-medium">{row.original.title}</p>
           <p className="text-xs capitalize text-muted-foreground">
             {row.original.type}

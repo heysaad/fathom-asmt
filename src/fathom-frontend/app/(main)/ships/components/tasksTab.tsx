@@ -1,18 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/datatable";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
 import {
   CheckCircleIcon,
   Edit2Icon,
-  EditIcon,
   EllipsisVerticalIcon,
-  SearchIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -36,7 +28,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { DateFormat, FromNow } from "@/components/libs/moment";
 import { useUser } from "@/app/lib/user-context";
 import EditTaskDialog from "../../maintainance/components/editTaskDialog";
 import { PaginationTable } from "@/components/paginationTable";
@@ -44,6 +35,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/app/lib/helpers";
 import { StatusBadge } from "@/components/ui/badge";
+import { TaskDueDate } from "@/components/app/taskDueDate";
 
 export default function MaintainanceSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -184,12 +176,7 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                 accessorKey: "dueDate",
                 header: "Due",
                 cell: ({ row }) => (
-                  <>
-                    <DateFormat
-                      date={row.original.dueDate}
-                      format="DD MMM YYYY"
-                    />
-                  </>
+                  <TaskDueDate task={row.original} format="date" />
                 ),
               },
               {

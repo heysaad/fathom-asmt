@@ -5,9 +5,9 @@ import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { FilterIcon, UserIcon } from "lucide-react";
 
+import { TaskDueDate } from "@/components/app/taskDueDate";
 import { FromCalendar } from "@/components/libs/moment";
 import { PaginationTable } from "@/components/paginationTable";
-import { StatusBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
@@ -117,8 +117,7 @@ export function AdminTasksTable() {
     {
       accessorKey: "dueDate",
       header: "Due",
-      cell: ({ row }) =>
-        row.original.dueDate ? <FromCalendar date={row.original.dueDate} /> : "-",
+      cell: ({ row }) => <TaskDueDate task={row.original} />,
     },
     {
       accessorKey: "status",

@@ -1,6 +1,7 @@
 import { Drill, MaintenanceRecord } from "@/app/(main)/ships/models";
 import { StatusBadge } from "../ui/badge";
 import moment from "moment";
+import { isTaskOverdue } from "./taskDueDate";
 
 export function DrillStatusBadge({ drill }: { drill: Drill }) {
   let status = drill.status as string;
@@ -14,10 +15,6 @@ export function DrillStatusBadge({ drill }: { drill: Drill }) {
 
 export function TaskStatusBadge({ task }: { task: MaintenanceRecord }) {
   let status = task.status as string;
-  if (
-    task.status == "scheduled" &&
-    moment(task.dueDate) < moment(new Date())
-  )
-    status = "overdue";
+  if (isTaskOverdue(task)) status = "overdue";
   return <StatusBadge status={status} />;
 }

@@ -15,9 +15,9 @@ import { useUser } from "@/app/lib/user-context";
 import { PaginationTable } from "@/components/paginationTable";
 import { Button } from "@/components/ui/button";
 import { FromCalendar } from "@/components/libs/moment";
+import { TaskDueDate } from "@/components/app/taskDueDate";
 import ShipImg from "../../ships/components/shipImg";
 import type { DrillAssignment, MaintenanceRecord } from "../../ships/models";
-import { StatusBadge } from "@/components/ui/badge";
 import { DashboardHeader, MetricCard } from "./dashboard-utils";
 import type { PagedResponse } from "./dashboard-utils";
 import {
@@ -124,7 +124,7 @@ export default function CrewDashboardView() {
       header: "Task",
       cell: ({ row }) => (
         <div className="max-w-72">
-          <FromCalendar date={row.original.dueDate} />
+          <TaskDueDate task={row.original} />
           <p className="font-medium">{row.original.title}</p>
           <p className="text-xs capitalize text-muted-foreground">
             {row.original.type}
