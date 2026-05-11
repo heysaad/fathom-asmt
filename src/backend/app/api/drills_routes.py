@@ -19,6 +19,7 @@ from app.infra.auth.users import get_current_user
 from app.schemas.common import DrillDto, ShipDto
 from app.api.ship_drill_assignment_routes import DrillAssignmentDto
 from app.services.event_triggers import EventTriggers
+from app.utils.datetime import utc_now
 
 router = APIRouter()
 
@@ -98,7 +99,7 @@ async def get_paginated_drills_route(
     if req.filters and req.filters.status:
         if req.filters.status == "missed":
             filters.append(Drill.status == "scheduled")
-            filters.append(Drill.scheduled_at < datetime.now(UTC))
+            filters.append(Drill.scheduled_at < utc_now())
         else:
             filters.append(Drill.status == req.filters.status)
 
@@ -255,7 +256,7 @@ async def update_drill_route(
         drill.status = payload.status
         completed = drill.status == "completed"
         if completed:
-            drill.completed_at = datetime.now(UTC)
+            drill.completed_at = utc_now()
 
     if payload.started_at is not None:
         drill.started_at = payload.started_at

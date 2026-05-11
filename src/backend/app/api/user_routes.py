@@ -16,6 +16,7 @@ from app.infra.data.models.Ship import Drill, MaintainanceTask, ShipCrewAssignme
 from app.infra.data.models.User import User
 from app.schemas.common import ShipDto, UserDto
 from app.schemas.schemas import UserCreate, UserUpdate
+from app.utils.datetime import utc_now
 
 router = APIRouter()
 
@@ -116,7 +117,7 @@ async def get_user_route(user_id: uuid.UUID, db: AsyncSession = Depends(get_db))
         select(func.count(MaintainanceTask.id)).where(
             MaintainanceTask.assigned_to_id == user.id,
             MaintainanceTask.status != "completed",
-            MaintainanceTask.due_date < datetime.now(UTC),
+            MaintainanceTask.due_date < utc_now(),
         )
     )
     drills_created = await db.scalar(

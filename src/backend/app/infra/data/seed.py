@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy import func, select
@@ -15,37 +15,38 @@ from app.infra.data.models.Ship import (
 )
 from app.infra.data.models.User import User
 from app.schemas.schemas import UserCreate
+from app.utils.datetime import utc_now
 
 DEFAULT_PASSWORD = "admin123"
 
 
 USERS = [
     {
-        "email": "admin@fathom.local",
+        "email": "admin@fathom.com",
         "name": "Avery Morgan",
         "designation": "Fleet Administrator",
         "role": "admin",
     },
     {
-        "email": "captain@fathom.local",
+        "email": "captain@fathom.com",
         "name": "Maya Patel",
         "designation": "Captain",
         "role": "crew",
     },
     {
-        "email": "engineer@fathom.local",
+        "email": "engineer@fathom.com",
         "name": "Leo Anders",
         "designation": "Chief Engineer",
         "role": "crew",
     },
     {
-        "email": "officer@fathom.local",
+        "email": "officer@fathom.com",
         "name": "Nora Singh",
         "designation": "Safety Officer",
         "role": "crew",
     },
     {
-        "email": "bosun@fathom.local",
+        "email": "bosun@fathom.com",
         "name": "Owen Clarke",
         "designation": "Bosun",
         "role": "crew",
@@ -131,7 +132,7 @@ async def _seed_initial_data(session: AsyncSession) -> None:
     admin = users_by_email["admin@fathom.local"]
     crew = [user for user in users_by_email.values() if user.role == "crew"]
 
-    now = datetime.now(UTC).replace(tzinfo=None)
+    now = utc_now()
 
     for ship_index, item in enumerate(SHIPS):
         ship = Ship(

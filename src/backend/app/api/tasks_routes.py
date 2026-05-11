@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.infra.data.database import get_db
 from app.schemas.common import ShipDto, UserDto
 from app.services.event_triggers import EventTriggers
+from app.utils.datetime import utc_now
 
 router = APIRouter()
 
@@ -50,7 +51,7 @@ async def get_paginated_list(
     if filters and filters.status:
         if filters.status == "missed":
             query = query.where(MaintainanceTask.status != "completed",
-                                MaintainanceTask.due_date < datetime.now(UTC))
+                                MaintainanceTask.due_date < utc_now())
         else:
             query = query.where(MaintainanceTask.status == filters.status)
 
@@ -116,7 +117,7 @@ async def update_by_crew(
             status_code=403, detail="You don't have rights to update")
 
     if req.status == "completed" and task.status != req.status:
-        task.completed_on = datetime.now(UTC)
+        task.completed_on = utc_now()
 
     task.status = req.status
 
