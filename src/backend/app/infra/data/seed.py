@@ -129,7 +129,7 @@ async def _seed_initial_data(session: AsyncSession) -> None:
         )
         users_by_email[item["email"]] = user
 
-    admin = users_by_email["admin@fathom.local"]
+    admin = users_by_email["admin@fathom.com"]
     crew = [user for user in users_by_email.values() if user.role == "crew"]
 
     now = utc_now()
