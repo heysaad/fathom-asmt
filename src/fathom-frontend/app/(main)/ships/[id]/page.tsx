@@ -19,6 +19,7 @@ import DrillsTab from "../components/drillsTab";
 import MaintainanceSection from "../components/tasksTab";
 import ShipImg from "../components/shipImg";
 import type { ShipVM } from "../models";
+import { useSearchParams } from "next/navigation";
 
 function CompliancePanel({ score }: { score?: number }) {
   const value = score ?? 0;
@@ -59,6 +60,8 @@ export default function ShipPage({
   const { id: shipId } = use(params);
   const [ship, setShip] = React.useState<ShipVM | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const searchParams = useSearchParams();
+  const queryTab = searchParams.get('tab')
 
   useEffect(() => {
     const loadData = async () => {
@@ -141,13 +144,13 @@ export default function ShipPage({
         <CompliancePanel score={ship.compliance_score} />
       </section>
 
-      <Tabs defaultValue="safety-crew" className="gap-5">
+      <Tabs defaultValue={queryTab ?? "crew"} className="gap-5">
         <TabsList className="justify-start">
-          <TabsTrigger value="safety-crew">
+          <TabsTrigger value="crew">
             <UsersIcon className="size-4" />
             Crew
           </TabsTrigger>
-          <TabsTrigger value="maintainance">
+          <TabsTrigger value="tasks">
             <ClipboardListIcon className="size-4" />
             Maintenance
           </TabsTrigger>
@@ -157,7 +160,7 @@ export default function ShipPage({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="maintainance">
+        <TabsContent value="tasks">
           <MaintainanceSection shipId={shipId} />
         </TabsContent>
 
@@ -165,7 +168,7 @@ export default function ShipPage({
           <DrillsTab shipId={shipId} />
         </TabsContent>
 
-        <TabsContent value="safety-crew">
+        <TabsContent value="crew">
           <CrewTab shipId={shipId} />
         </TabsContent>
       </Tabs>

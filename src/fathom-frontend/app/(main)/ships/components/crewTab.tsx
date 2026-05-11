@@ -30,6 +30,8 @@ import { DateFormat } from "@/components/libs/moment";
 import CreateCrewDialog from "./createCrewDialog";
 import EditCrewDialog from "./editCrewDialog";
 import { ScoreBadge, StatusBadge } from "@/components/ui/badge";
+import { canEditCrewAsst } from "@/app/lib/permissions";
+import { useUser } from "@/app/lib/user-context";
 
 export default function CrewSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -42,6 +44,7 @@ export default function CrewSection({ shipId }: { shipId: string }) {
     ShipCrewAssignment | undefined
   >();
   const [refreshKey, setRefreshKey] = useState(0);
+  const { user } = useUser();
 
   const handleDeleteClicked = (assignmentId: string) => {
     setShowDelete(true);
@@ -129,38 +132,38 @@ export default function CrewSection({ shipId }: { shipId: string }) {
     {
       accessorKey: "compliance_score",
       header: "Score",
-      cell: ({ row }) => (
-        <ScoreBadge score={row.original.compliance_score} />
-      ),
+      cell: ({ row }) => <ScoreBadge score={row.original.compliance_score} />,
     },
     {
       accessorKey: "actions",
       header: "",
       cell: ({ row }) => (
         <div className="flex gap-2 items-center justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <EllipsisVerticalIcon className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-44" align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onClick={() => handleEditClicked(row.original)}
-                >
-                  <Edit2Icon className="size-3 mr-1" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleDeleteClicked(row.original.id)}
-                >
-                  <Trash2Icon className="size-3 mr-1" />
-                  Remove
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {canEditCrewAsst(user) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <EllipsisVerticalIcon className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-44" align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => handleEditClicked(row.original)}
+                  >
+                    <Edit2Icon className="size-3 mr-1" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDeleteClicked(row.original.id)}
+                  >
+                    <Trash2Icon className="size-3 mr-1" />
+                    Remove
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       ),
     },
@@ -180,9 +183,11 @@ export default function CrewSection({ shipId }: { shipId: string }) {
           </div>
         }
         actions={
-          <Button type="button" onClick={addCrewClicked}>
-            Add Crew Member
-          </Button>
+          canEditCrewAsst(user) && (
+            <Button type="button" onClick={addCrewClicked}>
+              Add Crew Member
+            </Button>
+          )
         }
         columns={columns}
       />

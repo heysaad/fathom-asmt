@@ -136,7 +136,7 @@ export default function CrewDashboardView() {
       header: "Ship",
       cell: ({ row }) => (
         <Link
-          href={`/ships/${row.original.ship_id}`}
+          href={`/ships/${row.original.ship_id}?tab=tasks`}
           className="flex min-w-48 items-center gap-2"
         >
           {row.original.ship_id && (
@@ -179,7 +179,7 @@ export default function CrewDashboardView() {
       header: "Ship",
       cell: ({ row }) => (
         <Link
-          href={`/ships/${row.original.drill?.ship_id}`}
+          href={`/ships/${row.original.drill?.ship_id}?tab=drills`}
           className="flex min-w-48 items-center gap-2"
         >
           {row.original.drill?.ship_id && (
@@ -260,7 +260,7 @@ export default function CrewDashboardView() {
               </Button>
             }
             columns={taskColumns}
-            filters={{ status: "scheduled" }}
+            filters={{ status: "open" }}
             initialPageSize={5}
           />
         </div>
@@ -279,7 +279,7 @@ export default function CrewDashboardView() {
               </Button>
             }
             columns={drillColumns}
-            filters={{ status: "scheduled" }}
+            filters={{ status: "open" }}
             initialPageSize={5}
           />
         </div>

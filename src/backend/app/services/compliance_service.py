@@ -93,7 +93,8 @@ class ComplianceService:
         completed_drills = await self.db.scalar(
             select(func.count(Drill.id))
             .where(Drill.completed_at is not None,
-                   Drill.completed_at <= Drill.scheduled_at))
+                   Drill.completed_at <= Drill.scheduled_at,
+                   Drill.status == "completed"))
 
         return ComplianceResult(completed=completed_drills, total=total_drills)
 

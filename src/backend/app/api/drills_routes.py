@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select, and_
+from sqlalchemy import or_, select, and_
 from sqlalchemy.orm import contains_eager, joinedload
 from datetime import UTC, datetime, timezone
 
@@ -142,7 +142,11 @@ async def get_my_drills_route(
     filters = []
 
     if req.filters and req.filters.status:
-        filters.append(Drill.status == req.filters.status)
+        if req.filters.status == "open":
+            filters.append(or_(Drill.status == "scheduled",
+                           Drill.status == "in_progress"))
+        else:
+            filters.append(Drill.status == req.filters.status)
 
     if req.filters and req.filters.drill_type:
         filters.append(Drill.type == req.filters.drill_type)
@@ -164,7 +168,7 @@ async def get_my_drills_route(
         .where(
             DrillAssignment.ship_crew_assignment.has(
                 user.id == ShipCrewAssignment.crew_member_id))\
-        .where(and_(*filters)).order_by(Drill.scheduled_at.desc())
+        .where(and_(*filters)).order_by(Drill.scheduled_at.asc())
 
     paginator = Paginator(db)
     result = await paginator.get_paginated(req, query)
@@ -270,9 +274,7 @@ async def update_drill_route(
     await db.commit()
     await db.refresh(drill)
 
-    if completed:
-        await triggers.on_drill_done(drill_id)
-
+    await triggers.on_drill_done(drill_id)
     return DrillDto.model_validate(drill)
 
 

@@ -34,6 +34,9 @@ import CreateDrillDialog from "./createDrillDialog";
 import EditDrillDialog from "./editDrillDialog";
 import DrillAssignmentsSheet from "./drillAssignmentsSheet";
 import { StatusBadge } from "@/components/ui/badge";
+import { DrillStatusBadge } from "@/components/app/drillStatusBadge";
+import { canAddDrill, canEditDrill } from "@/app/lib/permissions";
+import { useUser } from "@/app/lib/user-context";
 
 export default function DrillsSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -43,6 +46,7 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
   const [selectedDrillId, setSelectedDrillId] = useState<string | null>(null);
   const [selectedDrill, setSelectedDrill] = useState<Drill | undefined>();
   const [refreshKey, setRefreshKey] = useState(0);
+  const { user } = useUser();
 
   const handleDeleteClicked = (drillId: string) => {
     setShowDelete(true);
@@ -126,47 +130,46 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => (
-        <StatusBadge status={row.original.status} />
-      ),
+      cell: ({ row }) => <DrillStatusBadge drill={row.original} />,
     },
     {
       accessorKey: "actions",
       header: "",
-      cell: ({ row }) => (
-        <div className="flex gap-2 items-center justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleAssignmentsClicked(row.original)}
-          >
-            <UsersIcon className="size-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <EllipsisVerticalIcon className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-44" align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onClick={() => handleEditClicked(row.original)}
-                >
-                  <Edit2Icon className="size-3 mr-1" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleDeleteClicked(row.original.id)}
-                >
-                  <Trash2Icon className="size-3 mr-1" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
+      cell: ({ row }) =>
+        canEditDrill(user) && (
+          <div className="flex gap-2 items-center justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleAssignmentsClicked(row.original)}
+            >
+              <UsersIcon className="size-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <EllipsisVerticalIcon className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-44" align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => handleEditClicked(row.original)}
+                  >
+                    <Edit2Icon className="size-3 mr-1" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDeleteClicked(row.original.id)}
+                  >
+                    <Trash2Icon className="size-3 mr-1" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ),
     },
   ];
 
@@ -184,9 +187,11 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
           </div>
         }
         actions={
-          <Button type="button" onClick={addDrillClicked}>
-            Create Drill
-          </Button>
+          canAddDrill(user) && (
+            <Button type="button" onClick={addDrillClicked}>
+              Create Drill
+            </Button>
+          )
         }
         columns={columns}
       />

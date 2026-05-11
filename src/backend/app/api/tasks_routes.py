@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import joinedload
 
 from app.infra.data.models.Ship import MaintainanceTask, Ship
@@ -85,7 +85,10 @@ async def get_my_tasks(
         query = query.where(MaintainanceTask.title.icontains(req.search))
 
     if filters and filters.status:
-        query = query.where(MaintainanceTask.status == filters.status)
+        if filters.status == "open":
+            query = query.where(or_(MaintainanceTask.status == "scheduled", MaintainanceTask.status == "in_progress"))
+        else:
+            query = query.where(MaintainanceTask.status == filters.status)
 
     if filters and filters.dateFrom:
         query = query.where(
@@ -96,7 +99,7 @@ async def get_my_tasks(
             MaintainanceTask.due_date <= to_db_datetime(filters.dateTo))
 
     paged = await paginator.get_paginated(
-        req, query.order_by(MaintainanceTask.created_at.desc())
+        req, query.order_by(MaintainanceTask.created_at.asc())
     )
     return paged.to_dto(TaskDto)
 
@@ -112,7 +115,7 @@ async def update_by_crew(
         select(MaintainanceTask).where(MaintainanceTask.id == req.id)
     )
 
-    if user.role != "admin" and task.assigned_to_id == user.id:
+    if user.role != "admin" and task.assigned_to_id != user.id:
         raise HTTPException(
             status_code=403, detail="You don't have rights to update")
 

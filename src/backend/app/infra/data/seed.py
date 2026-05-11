@@ -162,13 +162,12 @@ async def _seed_initial_data(session: AsyncSession) -> None:
             assignments.append(assignment)
 
         for task_index, (title, task_type, status, due_days) in enumerate(TASK_TEMPLATES):
-            task_title = f"{title} - {ship.name}"
+            task_title = title
             assignee = crew[(ship_index + task_index) % len(crew)]
             session.add(
                 MaintainanceTask(
                     ship_id=ship.id,
                     title=task_title,
-                    description=f"Seed task for {ship.name}.",
                     type=task_type,
                     status=status,
                     due_date=now + timedelta(days=due_days + ship_index),

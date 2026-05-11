@@ -13,7 +13,7 @@ export type UserInfo = {
 };
 
 type UserContextType = {
-  user: UserInfo | null;
+  user?: UserInfo;
   loading: boolean;
   refreshUser: () => Promise<void>;
 };

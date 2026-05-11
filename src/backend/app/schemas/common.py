@@ -38,6 +38,6 @@ class DrillDto(BaseModel):
     completed_at: datetime | None
     status: str
     notes: str | None
-    created_by: str | None
+    created_by: UUID | None
     created_at: datetime
 

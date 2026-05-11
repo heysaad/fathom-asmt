@@ -68,7 +68,7 @@ class UserDetailsDto(UserDto):
     ship_assignments: list[UserShipAssignmentDto] = Field(default_factory=list)
 
 
-@router.get("", summary="Get users", dependencies=admin_only)
+@router.get("", summary="Get users")
 async def list_users_route(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).order_by(User.email))
     users = result.scalars().all()

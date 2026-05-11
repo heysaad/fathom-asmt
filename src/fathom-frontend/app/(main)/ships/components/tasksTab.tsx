@@ -36,6 +36,7 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/app/lib/helpers";
 import { StatusBadge } from "@/components/ui/badge";
 import { TaskDueDate } from "@/components/app/taskDueDate";
+import { canAddTask, canDeleteTask, canEditTask } from "@/app/lib/permissions";
 
 export default function MaintainanceSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -92,7 +93,7 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
       id: data.id,
       status: status,
     });
-    toast.success("Started task");
+    toast.success(`Task ${status}`);
     await loadData();
   };
 
@@ -111,9 +112,11 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
             </div>
           }
           actions={
-            <Button type="button" onClick={addTaskClicked}>
-              Add Task
-            </Button>
+            canAddTask(user) && (
+              <Button type="button" onClick={addTaskClicked}>
+                Add Task
+              </Button>
+            )
           }
           columns={
             [
@@ -182,16 +185,14 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
               {
                 accessorKey: "status",
                 header: "Status",
-                cell: ({ row }) => (
-                  <StatusBadge status={row.original.status} />
-                ),
+                cell: ({ row }) => <StatusBadge status={row.original.status} />,
               },
               {
                 accessorKey: "actions",
                 header: "",
                 cell: ({ row }) => (
                   <div className="flex gap-2 items-center justify-end">
-                    {row.original.assignedToId == user?.id &&
+                    {canEditTask(row.original, user) &&
                       row.original.status == "scheduled" && (
                         <Button
                           variant={"outline"}
@@ -201,35 +202,50 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                           Start
                         </Button>
                       )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost">
-                          <EllipsisVerticalIcon className="size-4" />
+
+                    {canEditTask(row.original, user) &&
+                      row.original.status == "in_progress" && (
+                        <Button
+                          variant={"outline"}
+                          size={"xs"}
+                          onClick={() => setStatus(row.original, "completed")}
+                        >
+                          Complete
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-44" align="end">
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem
-                            onClick={() => handleEditClicked(row.original)}
-                          >
-                            <Edit2Icon className="size-3 mr-1" />
-                            Edit
-                          </DropdownMenuItem>
-                          {row.original.status !== "completed" && (
-                            <DropdownMenuItem>
-                              <CheckCircleIcon className="size-3 mr-1" />
-                              Mark as Complete
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteClickd(row.original.id)}
-                          >
-                            <Trash2Icon className="size-3 mr-1" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      )}
+
+                    {(canEditTask(row.original, user) ||
+                      canDeleteTask(row.original, user)) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost">
+                            <EllipsisVerticalIcon className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-44" align="end">
+                          <DropdownMenuGroup>
+                            {canEditTask(row.original, user) && (
+                              <DropdownMenuItem
+                                onClick={() => handleEditClicked(row.original)}
+                              >
+                                <Edit2Icon className="size-3 mr-1" />
+                                Edit
+                              </DropdownMenuItem>
+                            )}
+                            {canDeleteTask(row.original, user) && (
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleDeleteClickd(row.original.id)
+                                }
+                              >
+                                <Trash2Icon className="size-3 mr-1" />
+                                Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 ),
               },
