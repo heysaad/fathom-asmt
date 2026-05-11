@@ -33,3 +33,20 @@ Postgres | localhost:5432
    npm i
    npm run dev
    ```
+
+## Seed Data
+
+On first startup, the API seeds demo data if it is missing:
+
+- 5 users with password `admin123`
+- 5 ships with sample maintenance tasks and drills
+
+Demo users:
+
+```text
+admin@fathom.com
+engineer@fathom.com
+captain@fathom.com
+officer@fathom.com
+bosun@fathom.com
+```
