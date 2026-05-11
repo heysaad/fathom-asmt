@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { AdminTasksTable } from "../components/operation-tables";
+import { AdminTasksTable } from "../components/admin-tasks-table";
 
 export default function AdminTasksPage() {
   return (

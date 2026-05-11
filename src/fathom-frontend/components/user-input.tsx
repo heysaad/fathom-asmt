@@ -24,32 +24,50 @@ export function UserInputItem(user: UserVM) {
 export function UserInput({
     value,
     onValueChange,
-    placeholder
+    placeholder,
+    includeAll = false,
+    allLabel = "All users",
 }: {
     value?: string,
-    onValueChange?: (value: string) => void,
-    placeholder?: string
+    onValueChange?: (value?: string) => void,
+    placeholder?: string,
+    includeAll?: boolean,
+    allLabel?: string,
 }) {
     const [users, setUsers] = useState<UserVM[]>([])
-
-    const loadUsers = async () => {
-        const response = await apiClient.get<UserVM[]>('/users')
-        ensureSuccess(response)
-        setUsers(response.data)
-    }
+    const allValue = "__all_users__";
 
     useEffect(() => {
-        loadUsers()
+        let cancelled = false;
+
+        apiClient.get<UserVM[]>('/users').then((response) => {
+            ensureSuccess(response)
+            if (!cancelled) {
+                setUsers(response.data)
+            }
+        })
+
+        return () => {
+            cancelled = true;
+        }
     }, [])
 
     return (
-        <Select value={value} onValueChange={onValueChange}>
+        <Select
+            value={includeAll ? value || allValue : value}
+            onValueChange={(nextValue) =>
+                onValueChange?.(nextValue === allValue ? undefined : nextValue)
+            }
+        >
             <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder={placeholder ?? 'Select user'} />
             </SelectTrigger>
             <SelectContent>
                 <SelectGroup>
-                    {users.map(UserInputItem)}
+                    {includeAll && <SelectItem value={allValue}>{allLabel}</SelectItem>}
+                    {users.map((user) => (
+                        <UserInputItem key={user.id} {...user} />
+                    ))}
                 </SelectGroup>
             </SelectContent>
         </Select>

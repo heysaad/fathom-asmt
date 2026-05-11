@@ -41,6 +41,9 @@ async def get_paginated_list(
     if req.search:
         query = query.where(MaintainanceTask.title.icontains(req.search))
 
+    if filters and filters.shipId:
+        query = query.where(MaintainanceTask.ship_id == filters.shipId)
+
     if filters and filters.userId:
         query = query.where(MaintainanceTask.assigned_to_id == filters.userId)
 
@@ -128,6 +131,7 @@ async def update_by_crew(
 
 
 class FilterVM(BaseModel):
+    shipId: UUID | None = None
     userId: UUID | None = None
     status: str | None = None
     dateFrom: datetime | None = None

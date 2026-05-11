@@ -50,6 +50,7 @@ class UpdateDrillDto(BaseModel):
 
 
 class FilterVM(BaseModel):
+    shipId: UUID | None = None
     status: str | None = None
     drill_type: str | None = None
     dateFrom: datetime | None = None
@@ -90,6 +91,9 @@ async def get_paginated_drills_route(
     user: User = Depends(RoleChecker(["admin"])),
 ):
     filters = []
+
+    if req.filters and req.filters.shipId:
+        filters.append(Drill.ship_id == req.filters.shipId)
 
     if req.filters and req.filters.status:
         if req.filters.status == "missed":

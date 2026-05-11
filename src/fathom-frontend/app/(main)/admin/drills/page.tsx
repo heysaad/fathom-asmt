@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { AdminDrillsTable } from "../components/operation-tables";
+import { AdminDrillsTable } from "../components/admin-drills-table";
 
 export default function AdminDrillsPage() {
   return (
