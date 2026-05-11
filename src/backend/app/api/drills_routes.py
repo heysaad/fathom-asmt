@@ -301,4 +301,4 @@ async def delete_drill_route(
     await db.delete(drill)
     await db.commit()
 
-    await triggers.on_drill_done(drill_id)
+    await triggers.refresh_by_shipid(ship_id)
