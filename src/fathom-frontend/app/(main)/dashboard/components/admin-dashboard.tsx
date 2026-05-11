@@ -99,7 +99,7 @@ export default function AdminDashboard() {
       header: "Ship",
       cell: ({ row }) => (
         <Link
-          href={`/ships/${row.original.ship_id}`}
+          href={`/ships/${row.original.ship_id}?tab=tasks`}
           className="flex min-w-48 items-center gap-2"
         >
           {row.original.ship_id && (
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
       header: "Ship",
       cell: ({ row }) => (
         <Link
-          href={`/ships/${row.original.ship_id}`}
+          href={`/ships/${row.original.ship_id}?tab=drills`}
           className="flex min-w-48 items-center gap-2"
         >
           <ShipImg
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
         actionLabel="View all tasks"
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Open tasks"
           value={summary.openTasks}

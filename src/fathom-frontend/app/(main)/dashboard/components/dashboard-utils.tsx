@@ -78,7 +78,7 @@ export function MetricCard({
   return (
     <Card size="sm" className="rounded-lg">
       <CardContent className="flex items-start justify-between gap-4">
-        <div>
+        <div className="flex-1">
           <p className="text-sm text-muted-foreground">{title}</p>
           <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
           <p className="mt-1 text-xs text-muted-foreground">{helper}</p>

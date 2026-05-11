@@ -238,7 +238,7 @@ export default function CrewDashboardView() {
         actionLabel="Open task page"
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Compliance score"
           value={`${summary.complianceScore}%`}
