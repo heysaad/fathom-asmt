@@ -22,7 +22,7 @@ import { DrillStatusBadge } from "@/components/app/drillStatusBadge";
 import { useRouter } from "next/navigation";
 
 export default function DrillsPage() {
-  const [filters, setFilters] = useState<{ status?: string }>({});
+  const [filters, setFilters] = useState<{ status?: string }>({ status: "open" });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [refreshKey, setRefreshkey] = useState(1);
   const router = useRouter()
@@ -168,6 +168,9 @@ export default function DrillsPage() {
               }
             >
               <NativeSelectOption value="">All statuses</NativeSelectOption>
+              <NativeSelectOption value="open">
+                Open
+              </NativeSelectOption>
               <NativeSelectOption value="scheduled">
                 Scheduled
               </NativeSelectOption>

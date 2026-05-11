@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { FilterIcon, ListTodoIcon } from "lucide-react";
 
@@ -15,37 +15,69 @@ import EditTaskDialog from "../maintainance/components/editTaskDialog";
 import ShipImg from "../ships/components/shipImg";
 import type { MaintenanceRecord } from "../ships/models";
 import { TaskStatusBadge } from "@/components/app/drillStatusBadge";
+import { useUser } from "@/app/lib/user-context";
+import { canEditTask } from "@/app/lib/permissions";
+
+export function TaskCell({
+  task,
+  setTask,
+  setOpen,
+  children
+}: {
+  task: MaintenanceRecord;
+  setTask: (task: MaintenanceRecord) => void;
+  setOpen: (open: boolean) => void;
+  children?: ReactNode;
+}) {
+  const { user } = useUser();
+  const canEdit = canEditTask(task, user);
+
+  const handleItemClick = () => {
+    if (!canEdit) return;
+    setTask(task);
+    setOpen(true);
+  };
+
+  return (
+    <div
+      onClick={() => canEdit && handleItemClick()}
+      className={
+        (canEdit ? "cursor-pointer" : "") + " whitespace-normal max-w-48"
+      }
+    >
+      {children || (
+        <>
+          <span className="block text-xs font-medium capitalize text-muted-foreground">
+            {task.type}
+          </span>
+          <span className="block font-medium">{task.title}</span>
+          {task.description && (
+            <span className="line-clamp-2 block text-xs text-muted-foreground">
+              {task.description}
+            </span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function TasksPage() {
-  const [filters, setFilters] = useState<{ status?: string }>({});
+  const [filters, setFilters] = useState<{ status?: string }>({ status: "open" });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [refreshKey, setRefreshkey] = useState(1);
   const [selectedTask, setSelectedTask] = useState<MaintenanceRecord>();
-
-  const handleItemClick = (row: MaintenanceRecord) => {
-    setSelectedTask(row);
-    setEditModalOpen(true);
-  };
 
   const columns = [
     {
       accessorKey: "title",
       header: "Task",
       cell: ({ row }) => (
-        <button
-          onClick={() => handleItemClick(row.original)}
-          className="max-w-96 cursor-pointer text-left"
-        >
-          <span className="block text-xs font-medium capitalize text-muted-foreground">
-            {row.original.type}
-          </span>
-          <span className="block font-medium">{row.original.title}</span>
-          {row.original.description && (
-            <span className="line-clamp-2 block text-xs text-muted-foreground">
-              {row.original.description}
-            </span>
-          )}
-        </button>
+        <TaskCell
+          task={row.original}
+          setOpen={setEditModalOpen}
+          setTask={setSelectedTask}
+        />
       ),
     },
     {
@@ -114,11 +146,18 @@ export default function TasksPage() {
               }
             >
               <NativeSelectOption value="">All statuses</NativeSelectOption>
-              <NativeSelectOption value="scheduled">Scheduled</NativeSelectOption>
+              <NativeSelectOption value="open">
+                Open
+              </NativeSelectOption>
+              <NativeSelectOption value="scheduled">
+                Scheduled
+              </NativeSelectOption>
               <NativeSelectOption value="in_progress">
                 In Progress
               </NativeSelectOption>
-              <NativeSelectOption value="completed">Completed</NativeSelectOption>
+              <NativeSelectOption value="completed">
+                Completed
+              </NativeSelectOption>
             </NativeSelect>
           </div>
         }

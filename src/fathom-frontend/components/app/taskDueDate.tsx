@@ -35,6 +35,7 @@ export function TaskDueDate({
         overdue && "font-medium text-red-700 dark:text-red-400",
         className,
       )}
+      title={dueDate.format("DD MMM YYYY HH:mm")}
     >
       {label}
     </span>

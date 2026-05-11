@@ -6,6 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   AlertTriangleIcon,
   CalendarCheckIcon,
+  CalendarIcon,
   ListTodoIcon,
   ShieldCheckIcon,
 } from "lucide-react";
@@ -24,6 +25,8 @@ import {
   DrillStatusBadge,
   TaskStatusBadge,
 } from "@/components/app/drillStatusBadge";
+import EditTaskDialog from "../../maintainance/components/editTaskDialog";
+import { TaskCell } from "../../tasks/page";
 
 type CrewSummary = {
   complianceScore: number;
@@ -40,6 +43,8 @@ export default function CrewDashboardView() {
     overdueTasks: 0,
     upcomingDrills: 0,
   });
+  const [openEditTask, setOpenEditTask] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<MaintenanceRecord>();
 
   const loadSummary = useCallback(async () => {
     const now = new Date().toISOString();
@@ -123,13 +128,21 @@ export default function CrewDashboardView() {
       accessorKey: "title",
       header: "Task",
       cell: ({ row }) => (
-        <div className="max-w-72">
-          <TaskDueDate task={row.original} />
-          <p className="font-medium">{row.original.title}</p>
-          <p className="text-xs capitalize text-muted-foreground">
-            {row.original.type}
-          </p>
-        </div>
+        <TaskCell
+          task={row.original}
+          setOpen={setOpenEditTask}
+          setTask={setSelectedTask}
+        >
+          <p className="font-medium truncate">{row.original.title}</p>
+          <div className="flex gap-1 items-center whitespace-nowrap text-xs">
+            <CalendarIcon className="size-3 text-muted-foreground" />{" "}
+            <TaskDueDate task={row.original} />
+            <div className="text-xs capitalize text-muted-foreground">
+              {" "}
+              • {row.original.type}
+            </div>
+          </div>
+        </TaskCell>
       ),
     },
     {
@@ -162,16 +175,20 @@ export default function CrewDashboardView() {
       header: "Drill",
       cell: ({ row }) => (
         <div className="max-w-72">
-          {row.original.drill && (
-            <FromCalendar date={row.original.drill.scheduled_at} />
-          )}
           <p className="font-medium">
             {row.original.drill?.title ??
               row.original.drill?.type.replaceAll("_", " ")}
           </p>
-          <p className="text-xs capitalize text-muted-foreground">
-            {row.original.drill?.type.replaceAll("_", " ")}
-          </p>
+          {row.original.drill && (
+            <div className="flex gap-1 items-center text-xs">
+              <CalendarIcon className="size-3 text-muted-foreground" />{" "}
+              <FromCalendar date={row.original.drill.scheduled_at} />
+              <span className="text-xs capitalize text-muted-foreground">
+                {" "}
+                • {row.original.drill?.type.replaceAll("_", " ")}
+              </span>
+            </div>
+          )}
         </div>
       ),
     },
@@ -284,6 +301,12 @@ export default function CrewDashboardView() {
           />
         </div>
       </div>
+
+      <EditTaskDialog
+        open={openEditTask}
+        setOpen={setOpenEditTask}
+        data={selectedTask}
+      />
     </div>
   );
 }
