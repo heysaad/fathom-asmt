@@ -87,16 +87,38 @@ class ComplianceService:
         total_drills = await self.db.scalar(
             select(func.count(Drill.id))
             .where(Drill.ship_id == ship_id)
-        )
+        ) or 0
 
         # completed on time
         completed_drills = await self.db.scalar(
             select(func.count(Drill.id))
-            .where(Drill.completed_at is not None,
-                   Drill.completed_at <= Drill.scheduled_at,
-                   Drill.status == "completed"))
-        
-        return ComplianceResult(completed=completed_drills, total=total_drills)
+            .where(Drill.ship_id == ship_id)
+            .where(
+                Drill.completed_at.is_not(None),
+                Drill.completed_at <= Drill.scheduled_at,
+                Drill.status == "completed",
+            )
+        ) or 0
+
+        total_tasks = await self.db.scalar(
+            select(func.count(MaintainanceTask.id))
+            .where(MaintainanceTask.ship_id == ship_id)
+        ) or 0
+
+        completed_tasks = await self.db.scalar(
+            select(func.count(MaintainanceTask.id))
+            .where(MaintainanceTask.ship_id == ship_id)
+            .where(
+                MaintainanceTask.completed_on.is_not(None),
+                MaintainanceTask.completed_on <= MaintainanceTask.due_date,
+                MaintainanceTask.status == "completed",
+            )
+        ) or 0
+
+        drills = ComplianceResult(completed=completed_drills, total=total_drills)
+        tasks = ComplianceResult(completed=completed_tasks, total=total_tasks)
+
+        return drills.add(tasks)
 
 
 class ComplianceResult:
