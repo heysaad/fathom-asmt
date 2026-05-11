@@ -1,18 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/datatable";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
 import {
   CheckCircleIcon,
   Edit2Icon,
-  EditIcon,
   EllipsisVerticalIcon,
-  SearchIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -36,13 +28,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { DateFormat, FromNow } from "@/components/libs/moment";
 import { useUser } from "@/app/lib/user-context";
 import EditTaskDialog from "../../maintainance/components/editTaskDialog";
 import { PaginationTable } from "@/components/paginationTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl } from "@/app/lib/helpers";
+import { StatusBadge } from "@/components/ui/badge";
+import { TaskDueDate } from "@/components/app/taskDueDate";
 
 export default function MaintainanceSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -105,11 +98,18 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
 
   return (
     <div>
-      <div className="flex justify-end gap-3 mb-4"></div>
       {loading && <p className="py-10 text-center">Loading...</p>}
       {!loading && (
         <PaginationTable
           url={`/ships/${shipId}/tasks-paginated`}
+          headerLeft={
+            <div>
+              <h2 className="font-medium">Maintenance tasks</h2>
+              <p className="text-sm text-muted-foreground">
+                Planned and active work assigned to this vessel.
+              </p>
+            </div>
+          }
           actions={
             <Button type="button" onClick={addTaskClicked}>
               Add Task
@@ -121,7 +121,7 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                 accessorKey: "title",
                 header: "Description",
                 cell: ({ row }) => (
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 max-w-72 whitespace-normal">
                     <div
                       className={`rounded-full h-4 w-1 bg-gray-100 mt-1 
                     ${
@@ -132,9 +132,9 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                           : "bg-orange-500"
                     }`}
                     ></div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       {row.original.title}
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground line-clamp-2">
                         {row.original.description}
                       </div>
                     </div>
@@ -176,32 +176,15 @@ export default function MaintainanceSection({ shipId }: { shipId: string }) {
                 accessorKey: "dueDate",
                 header: "Due",
                 cell: ({ row }) => (
-                  <>
-                    <DateFormat
-                      date={row.original.dueDate}
-                      format="DD MMM YYYY"
-                    />
-                  </>
+                  <TaskDueDate task={row.original} format="date" />
                 ),
               },
               {
                 accessorKey: "status",
                 header: "Status",
-                cell: ({ row }) => {
-                  const status = row.original.status;
-                  let color = "gray";
-                  if (status === "completed")
-                    color = "bg-green-100 text-green-800";
-                  else if (status === "in_progress")
-                    color = "bg-yellow-100 text-yellow-800";
-                  else if (status === "scheduled")
-                    color = "bg-orange-100 text-orange-800";
-                  return (
-                    <span className={`px-2 py-1 text-xs rounded-full ${color}`}>
-                      {status.replace("_", " ").toUpperCase()}
-                    </span>
-                  );
-                },
+                cell: ({ row }) => (
+                  <StatusBadge status={row.original.status} />
+                ),
               },
               {
                 accessorKey: "actions",

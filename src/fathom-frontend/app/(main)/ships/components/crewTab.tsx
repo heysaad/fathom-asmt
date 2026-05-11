@@ -29,7 +29,7 @@ import { getAvatarUrl } from "@/app/lib/helpers";
 import { DateFormat } from "@/components/libs/moment";
 import CreateCrewDialog from "./createCrewDialog";
 import EditCrewDialog from "./editCrewDialog";
-import ComplianceScore from "@/components/app/complianceScore";
+import { ScoreBadge, StatusBadge } from "@/components/ui/badge";
 
 export default function CrewSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -115,20 +115,9 @@ export default function CrewSection({ shipId }: { shipId: string }) {
     {
       accessorKey: "is_active",
       header: "Status",
-      cell: ({ row }) => {
-        const isActive = row.original.is_active;
-        return (
-          <span
-            className={`px-2 py-1 text-xs rounded-full ${
-              isActive
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {isActive ? "Active" : "Inactive"}
-          </span>
-        );
-      },
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.is_active ? "active" : "inactive"} />
+      ),
     },
     {
       accessorKey: "created_at",
@@ -141,7 +130,7 @@ export default function CrewSection({ shipId }: { shipId: string }) {
       accessorKey: "compliance_score",
       header: "Score",
       cell: ({ row }) => (
-        <ComplianceScore score={row.original.compliance_score} />
+        <ScoreBadge score={row.original.compliance_score} />
       ),
     },
     {
@@ -182,6 +171,14 @@ export default function CrewSection({ shipId }: { shipId: string }) {
       <PaginationTable
         key={refreshKey}
         url={`/ships/${shipId}/crew/list`}
+        headerLeft={
+          <div>
+            <h2 className="font-medium">Crew members</h2>
+            <p className="text-sm text-muted-foreground">
+              Active crew assignments and individual compliance status.
+            </p>
+          </div>
+        }
         actions={
           <Button type="button" onClick={addCrewClicked}>
             Add Crew Member

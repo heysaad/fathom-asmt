@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import apiClient from "@/app/lib/api-client";
+import { useDebounce } from "@/hooks/use-debounce";
 import React, { useEffect, useMemo, useState } from "react";
 import { DataTable } from "./ui/datatable";
 import { ColumnDef } from "@tanstack/react-table";
@@ -18,7 +19,6 @@ import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationPrevious,
 } from "./ui/pagination";
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight, SearchIcon, AlertCircle, Loader2 } from "lucide-react";
@@ -30,17 +30,18 @@ export function PaginationTable<TData, TValue>({
   filters,
   actions,
   headerLeft,
+  initialPageSize,
 }: {
   url: string;
   columns: ColumnDef<TData, TValue>[];
   filters?: any;
   actions?: React.ReactNode;
   headerLeft?: React.ReactElement;
+  initialPageSize?: number;
 }) {
   const {
     totalPages,
     data,
-    setFilters,
     prevPage,
     nextPage,
     hasNext,
@@ -53,12 +54,8 @@ export function PaginationTable<TData, TValue>({
     goToPage,
     search,
     setSearch,
-  } = usePagination<TData>({ url: url });
+  } = usePagination<TData>({ url: url, filters, initialPageSize });
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-
-  useEffect(() => {
-    setFilters(filters);
-  }, [setFilters, filters]);
 
   const handleValueChange = (cb: (value: number) => void) => {
     return (value: string) => {
@@ -122,6 +119,7 @@ export function PaginationTable<TData, TValue>({
                   </SelectTrigger>
                   <SelectContent align="start">
                     <SelectGroup>
+                      <SelectItem value="5">5</SelectItem>
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="25">25</SelectItem>
                       <SelectItem value="50">50</SelectItem>
@@ -181,19 +179,23 @@ export function PaginationTable<TData, TValue>({
 
 export function usePagination<T>({
   url,
-  filters: defaultFilters,
+  filters,
+  initialPageSize = 10,
 }: {
   url: string;
   filters?: any;
+  initialPageSize?: number;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [search, setSearch] = useState<string>();
-  const [filters, setFilters] = useState<any>(defaultFilters);
+  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<T[]>();
   const [error, setError] = useState<string>();
+  const filterKey = JSON.stringify(filters ?? null);
+  const debouncedSearch = useDebounce(search, 400);
+  const debouncedFilterKey = useDebounce(filterKey, 400);
 
   // Calculate slice indices for the current page
   const { lastIndex, firstIndex } = useMemo(() => {
@@ -202,38 +204,64 @@ export function usePagination<T>({
     return { lastIndex, firstIndex };
   }, [pageSize, currentPage]);
 
-  const loadData = async () => {
-    setError(undefined);
-    setLoading(true);
-    try {
-      const response = await apiClient.post<paginationResult<T>>(url, {
-        page: currentPage,
-        pageSize: pageSize,
-        search: search,
-        filters: filters,
-      });
-      const data = response.data;
-
-      setTotalPages(Math.ceil(data.total / pageSize));
-      setData(data.data);
-    } catch (ex) {
-      setError("Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedFilterKey, pageSize, debouncedSearch]);
 
   useEffect(() => {
-    loadData();
-  }, [currentPage, search, filters]);
+    let cancelled = false;
+
+    const loadData = async () => {
+      setError(undefined);
+      setLoading(true);
+      try {
+        const response = await apiClient.post<paginationResult<T>>(url, {
+          page: currentPage,
+          pageSize: pageSize,
+          search: debouncedSearch,
+          filters:
+            debouncedFilterKey === "null"
+              ? undefined
+              : JSON.parse(debouncedFilterKey),
+        });
+        const data = response.data;
+
+        if (cancelled) {
+          return;
+        }
+
+        setTotalPages(Math.ceil(data.total / pageSize));
+        setData(data.data);
+      } catch (ex) {
+        if (cancelled) {
+          return;
+        }
+
+        setError("Failed to load data");
+      } finally {
+        if (cancelled) {
+          return;
+        }
+
+        setLoading(false);
+      }
+    };
+
+    const timeout = window.setTimeout(loadData, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [currentPage, debouncedFilterKey, debouncedSearch, pageSize, url]);
 
   // Handlers to pass to the UI
   const goToPage = (page: number) =>
     setCurrentPage(Math.min(Math.max(1, page), totalPages));
   const nextPage = () => goToPage(currentPage + 1);
   const prevPage = () => goToPage(currentPage - 1);
-  const hasNext = () => currentPage < totalPages;
-  const hasPrev = () => currentPage > 1;
+  const hasNext = currentPage < totalPages;
+  const hasPrev = currentPage > 1;
 
   return {
     currentPage,
@@ -247,8 +275,9 @@ export function usePagination<T>({
     hasPrev,
     search,
     setSearch,
-    setFilters,
-    setPageSize,
+    setPageSize: (size: number) => {
+      setPageSize(size);
+    },
     pageSize,
     loading,
     data,

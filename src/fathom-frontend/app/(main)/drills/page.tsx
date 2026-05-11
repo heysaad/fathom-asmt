@@ -1,41 +1,43 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { CalendarCheckIcon, CheckIcon, FilterIcon } from "lucide-react";
+import { toast } from "sonner";
+
+import apiClient from "@/app/lib/api-client";
+import { FromCalendar } from "@/components/libs/moment";
 import { PaginationTable } from "@/components/paginationTable";
+import { StatusBadge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { ColumnDef } from "@tanstack/react-table";
-import { CheckIcon, FilterIcon } from "lucide-react";
-import { useState } from "react";
-import { Drill, DrillAssignment } from "../ships/models";
-import ShipImg from "../ships/components/shipImg";
-import { FromCalendar } from "@/components/libs/moment";
-import EditTaskDialog from "../maintainance/components/editTaskDialog";
-import Link from "next/link";
 import EditDrillDialog from "../ships/components/editDrillDialog";
-import { Button } from "@/components/ui/button";
-import apiClient from "@/app/lib/api-client";
-import { toast } from "sonner";
+import ShipImg from "../ships/components/shipImg";
+import type { Drill, DrillAssignment } from "../ships/models";
+import { DrillStatusBadge } from "@/components/app/drillStatusBadge";
+import { useRouter } from "next/navigation";
 
 export default function DrillsPage() {
   const [filters, setFilters] = useState<{ status?: string }>({});
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [refreshKey, setRefreshkey] = useState(1);
-  const [selected, setSelected] = useState<Drill>();
+  const router = useRouter()
 
   const handleItemClick = (row: DrillAssignment) => {
-    setSelected(row.drill);
-    setEditModalOpen(true);
+    router.push(`/ships/${row.drill?.ship_id}?tab=drills`)
   };
 
   const markAttendance = async (row: DrillAssignment) => {
-    const response = await apiClient.put(
+    await apiClient.put(
       `/ships/${row.drill!.ship_id}/drills/${row.drill_id}/assignments/${row.id}`,
       { is_attended: true },
     );
-    reloadData()
-    toast.success('Your attendance has been marked')
+    reloadData();
+    toast.success("Your attendance has been marked");
   };
 
   const columns = [
@@ -43,18 +45,23 @@ export default function DrillsPage() {
       accessorKey: "title",
       header: "Drill",
       cell: ({ row }) => (
-        <div
+        <button
           onClick={() => handleItemClick(row.original)}
-          className="cursor-pointer"
+          className="max-w-96 cursor-pointer text-left whitespace-normal"
         >
-          <div className="font-bold">{row.original.drill?.title}</div>
-          <div>
-            {row.original.drill?.scheduled_at && (
-              <FromCalendar date={row.original.drill?.scheduled_at} />
-            )}
-          </div>
-          {row.original.drill?.notes && <div>{row.original.drill?.notes}</div>}
-        </div>
+          <span className="block text-xs font-medium capitalize text-muted-foreground">
+            {row.original.drill?.type.replaceAll("_", " ")}
+          </span>
+          <span className="block font-medium">
+            {row.original.drill?.title ??
+              row.original.drill?.type.replaceAll("_", " ")}
+          </span>
+          {row.original.drill?.notes && (
+            <span className="line-clamp-2 block text-xs text-muted-foreground">
+              {row.original.drill.notes}
+            </span>
+          )}
+        </button>
       ),
     },
     {
@@ -62,64 +69,62 @@ export default function DrillsPage() {
       cell: ({ row }) => (
         <Link
           href={`/ships/${row.original.drill?.ship_id}`}
-          className="flex gap-2 cursor-pointer"
+          className="flex min-w-56 items-center gap-2"
         >
-          <div className="flex items-center gap-1">
-            {row.original.drill?.ship_id && (
-              <ShipImg
-                id={row.original.drill?.ship_id}
-                className="size-8 border rounded-lg"
-              />
-            )}
-            <div className="flex-1">
-              {row.original.drill?.ship?.name}
-              <div className="text-xs text-muted-foreground">
-                {row.original.drill?.ship?.type} •{" "}
-                {row.original.drill?.ship?.imo}
-              </div>
-            </div>
-          </div>
-          <div className="flex-1"></div>
+          {row.original.drill?.ship_id && (
+            <ShipImg
+              id={row.original.drill.ship_id}
+              className="size-9 rounded-lg"
+            />
+          )}
+          <span className="min-w-0">
+            <span className="block truncate font-medium">
+              {row.original.drill?.ship?.name ?? "Ship"}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {row.original.drill?.ship?.type ?? "Vessel"}
+              {row.original.drill?.ship?.imo
+                ? ` - IMO ${row.original.drill.ship.imo}`
+                : ""}
+            </span>
+          </span>
         </Link>
       ),
     },
     {
+      accessorKey: "scheduled_at",
+      header: "Scheduled",
+      cell: ({ row }) =>
+        row.original.drill?.scheduled_at ? (
+          <FromCalendar date={row.original.drill.scheduled_at} />
+        ) : (
+          "-"
+        ),
+    },
+    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.drill!.status;
-        let color = "gray";
-        if (status === "completed") color = "bg-green-100 text-green-800";
-        else if (status === "in_progress")
-          color = "bg-yellow-100 text-yellow-800";
-        else if (status === "scheduled")
-          color = "bg-orange-100 text-orange-800";
-        return (
-          <span className={`px-2 py-1 text-xs rounded-full ${color}`}>
-            {status.replace("_", " ").toUpperCase()}
-          </span>
-        );
-      },
+      cell: ({ row }) => (
+        <>
+          {row.original.drill && (
+            <DrillStatusBadge drill={row.original.drill} />
+          )}
+        </>
+      ),
     },
     {
       accessorKey: "id",
       header: "",
       cell: ({ row }) => (
-        <div className="flex gap-2 items-center">
-          {row.original.drill?.status == "in_progress" && (
-            <div>
-              {!row.original.is_attended && (
-                <Button
-                  size={"xs"}
-                  onClick={() => markAttendance(row.original)}
-                >
-                  Mark Attendance
-                </Button>
-              )}
-            </div>
-          )}
+        <div className="flex items-center justify-end gap-2">
+          {row.original.drill?.status == "in_progress" &&
+            !row.original.is_attended && (
+              <Button size="xs" onClick={() => markAttendance(row.original)}>
+                Mark Attendance
+              </Button>
+            )}
           {row.original.is_attended && (
-            <div className="text-green-500 flex gap-1 items-center">
+            <div className="flex items-center gap-1 text-sm text-emerald-600">
               <CheckIcon className="size-4" />
               Attended
             </div>
@@ -134,8 +139,18 @@ export default function DrillsPage() {
   };
 
   return (
-    <div className="container max-w-3xl mx-auto">
-      <h2 className="page-title mb-4">My Drills</h2>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      <div className="flex flex-col gap-3 border-b pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">
+            Safety participation
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">My drills</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Safety drills assigned to you and your attendance status.
+          </p>
+        </div>
+      </div>
 
       <PaginationTable
         key={refreshKey}
@@ -143,15 +158,16 @@ export default function DrillsPage() {
         columns={columns}
         filters={filters}
         headerLeft={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <CalendarCheckIcon className="size-4 text-muted-foreground" />
             <FilterIcon className="size-4 opacity-50" />
             <NativeSelect
               value={filters.status}
-              onChange={(x) =>
-                setFilters({ ...filters, status: x.target.value })
+              onChange={(event) =>
+                setFilters({ ...filters, status: event.target.value })
               }
             >
-              <NativeSelectOption value="">All</NativeSelectOption>
+              <NativeSelectOption value="">All statuses</NativeSelectOption>
               <NativeSelectOption value="scheduled">
                 Scheduled
               </NativeSelectOption>
@@ -165,16 +181,6 @@ export default function DrillsPage() {
           </div>
         }
       />
-
-      {selected?.ship_id && (
-        <EditDrillDialog
-          shipId={selected.ship_id}
-          open={editModalOpen}
-          setOpen={setEditModalOpen}
-          data={selected}
-          onSave={reloadData}
-        />
-      )}
     </div>
   );
 }

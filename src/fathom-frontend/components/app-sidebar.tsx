@@ -56,9 +56,22 @@ const data = {
       icon: <FlameIcon />,
     },
     {
+      title: "All Tasks",
+      url: "/admin/tasks",
+      icon: <ListTodoIcon />,
+      adminOnly: true,
+    },
+    {
+      title: "All Drills",
+      url: "/admin/drills",
+      icon: <FlameIcon />,
+      adminOnly: true,
+    },
+    {
       title: "Users",
       url: "/admin/users",
       icon: <ShieldUserIcon />,
+      adminOnly: true,
     },
   ],
   projects: [
@@ -90,22 +103,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: getAvatarUrl(user.name ?? user.email),
       }
     : data.user;
+  const navItems = data.navMain.filter(
+    (item) => !item.adminOnly || user?.role === "admin",
+  );
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <ShipIcon className="h-5 w-5" />
+        <div className="flex min-w-0 items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary transition-[width,height,border-radius] duration-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:rounded-lg">
+            <ShipIcon className="h-5 w-5 transition-[width,height] duration-200 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
           </div>
-          <div>
+          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
             <p className="text-sm font-semibold">Fathom Marine</p>
             <p className="text-xs text-slate-500">v{config.version}</p>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navItems} />
         {/* <NavProjects projects={data.projects} /> */}
       </SidebarContent>
       <SidebarFooter>

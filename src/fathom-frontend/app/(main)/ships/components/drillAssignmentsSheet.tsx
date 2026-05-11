@@ -28,7 +28,7 @@ import {
   Edit2Icon,
   EllipsisVerticalIcon,
   Trash2Icon,
-  CheckCircleIcon,
+  UserPlusIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { Drill, DrillAssignment } from "../models";
@@ -36,11 +36,10 @@ import apiClient from "@/app/lib/api-client";
 import { toast } from "sonner";
 import { PaginationTable } from "@/components/paginationTable";
 import { ColumnDef } from "@tanstack/react-table";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { getAvatarUrl } from "@/app/lib/helpers";
-import AddCrewToDrillDialog from "./addCrewToDrillDialog";
 import EditDrillAssignmentDialog from "./editDrillAssignmentDialog";
-import { UserBadge, UserBadgeSm } from "@/components/app/userBadge";
+import { UserBadgeSm } from "@/components/app/userBadge";
+import { Badge } from "@/components/ui/badge";
+import { UserInput } from "@/components/user-input";
 
 interface DrillAssignmentsSheetProps {
   open: boolean;
@@ -57,11 +56,12 @@ export default function DrillAssignmentsSheet({
   shipId,
   onRefresh,
 }: DrillAssignmentsSheetProps) {
-  const [addCrewOpen, setAddCrewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<DrillAssignment | undefined>();
+  const [selectedCrewId, setSelectedCrewId] = useState("");
+  const [assigning, setAssigning] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleDeleteClicked = (assignmentId: string) => {
@@ -74,6 +74,48 @@ export default function DrillAssignmentsSheet({
     setEditOpen(true);
   };
 
+  const handleAssignCrew = async () => {
+    if (!selectedCrewId) {
+      toast.error("Select a crew member first");
+      return;
+    }
+
+    setAssigning(true);
+    try {
+      await apiClient.post(`/ships/${shipId}/drills/${drill.id}/assignments`, {
+        crew_id: selectedCrewId,
+      });
+      toast.success("Crew member assigned to drill");
+      setSelectedCrewId("");
+      handleRefresh();
+      onRefresh();
+    } catch (error) {
+      const status = (error as { response?: { status?: number } }).response
+        ?.status;
+      if (status === 409) {
+        toast.error("This crew member is already assigned to this drill");
+      } else {
+        toast.error("Failed to assign crew member");
+      }
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const setAttendance = async (assignment: DrillAssignment, isAttended: boolean) => {
+    try {
+      await apiClient.put(
+        `/ships/${shipId}/drills/${drill.id}/assignments/${assignment.id}`,
+        { is_attended: isAttended },
+      );
+      toast.success(isAttended ? "Attendance marked" : "Attendance cleared");
+      handleRefresh();
+      onRefresh();
+    } catch {
+      toast.error("Failed to update attendance");
+    }
+  };
+
   const onDelete = async () => {
     if (!selectedAssignmentId) return;
     try {
@@ -83,7 +125,8 @@ export default function DrillAssignmentsSheet({
       toast.success("Crew member removed from drill");
       setShowDelete(false);
       setSelectedAssignmentId(null);
-      setRefreshKey((prev) => prev + 1);
+      handleRefresh();
+      onRefresh();
     } catch (error) {
       toast.error("Failed to remove crew member");
     }
@@ -100,24 +143,23 @@ export default function DrillAssignmentsSheet({
       cell: ({ row }) => (
         <div className="text-sm">
           {row.original.ship_crew_assignment?.crew_member && <UserBadgeSm data={row.original.ship_crew_assignment.crew_member} />}
-          {row.original.remarks}
+          {row.original.remarks && (
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+              {row.original.remarks}
+            </p>
+          )}
         </div>
       ),
     },
     {
-      accessorKey: "is_attended",
-      header: "Attended",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 text-xs rounded-full ${row.original.is_attended
-            ? "bg-green-100 text-green-800"
-            : "bg-gray-100 text-gray-800"
-            }`}
-        >
-          {row.original.is_attended ? "Yes" : "No"}
-        </span>
-      ),
-    },
+        accessorKey: "is_attended",
+        header: "Attended",
+        cell: ({ row }) => (
+          <Badge tone={row.original.is_attended ? "green" : "slate"}>
+            {row.original.is_attended ? "Attended" : "Pending"}
+          </Badge>
+        ),
+      },
     {
       accessorKey: "actions",
       header: "",
@@ -132,10 +174,19 @@ export default function DrillAssignmentsSheet({
             <DropdownMenuContent className="w-44" align="end">
               <DropdownMenuGroup>
                 <DropdownMenuItem
+                  onClick={() =>
+                    setAttendance(row.original, !row.original.is_attended)
+                  }
+                >
+                  {row.original.is_attended
+                    ? "Clear attendance"
+                    : "Mark attended"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => handleEditClicked(row.original)}
                 >
                   <Edit2Icon className="size-3 mr-1" />
-                  Edit
+                  Edit remarks
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => handleDeleteClicked(row.original.id)}
@@ -154,26 +205,47 @@ export default function DrillAssignmentsSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:w-3/4 md:w-2/3">
+        <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
           <SheetHeader>
-            <SheetTitle>Drill Assignments</SheetTitle>
+            <SheetTitle>Drill assignments</SheetTitle>
             <SheetDescription>
-              Manage crew assignments for {drill.title || drill.type}
+              Add crew members to {drill.title || drill.type.replace("_", " ")}.
+              Status:{" "}
+              <span className="capitalize">
+                {drill.status.replace("_", " ")}
+              </span>
             </SheetDescription>
           </SheetHeader>
 
-          <div className="mt-6">
+          <div className="mt-6 space-y-5 px-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end">
+              <div className="flex-1">
+                <p className="mb-2 text-sm font-medium">Add crew member</p>
+                <UserInput
+                  value={selectedCrewId}
+                  onValueChange={setSelectedCrewId}
+                />
+              </div>
+              <Button
+                type="button"
+                onClick={handleAssignCrew}
+                disabled={!selectedCrewId || assigning}
+              >
+                <UserPlusIcon className="size-4" />
+                {assigning ? "Assigning..." : "Assign"}
+              </Button>
+            </div>
+
             <PaginationTable
               key={refreshKey}
               url={`/ships/${shipId}/drills/${drill.id}/assignments/list`}
-              actions={
-                <Button
-                  type="button"
-                  onClick={() => setAddCrewOpen(true)}
-                  size="sm"
-                >
-                  Add Crew
-                </Button>
+              headerLeft={
+                <div>
+                  <h2 className="font-medium">Assigned crew</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Crew currently assigned to this drill.
+                  </p>
+                </div>
               }
               columns={columns}
             />
@@ -181,21 +253,16 @@ export default function DrillAssignmentsSheet({
         </SheetContent>
       </Sheet>
 
-      <AddCrewToDrillDialog
-        shipId={shipId}
-        drillId={drill.id}
-        open={addCrewOpen}
-        onOpenChange={setAddCrewOpen}
-        onSuccess={handleRefresh}
-      />
-
       <EditDrillAssignmentDialog
         data={selectedAssignment}
         open={editOpen}
         setOpen={setEditOpen}
         shipId={shipId}
         drillId={drill.id}
-        onSave={handleRefresh}
+        onSave={() => {
+          handleRefresh();
+          onRefresh();
+        }}
       />
 
       <AlertDialog open={showDelete} onOpenChange={setShowDelete}>

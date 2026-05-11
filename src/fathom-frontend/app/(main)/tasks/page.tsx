@@ -1,21 +1,22 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { FilterIcon, ListTodoIcon } from "lucide-react";
+
+import { TaskDueDate } from "@/components/app/taskDueDate";
 import { PaginationTable } from "@/components/paginationTable";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { ColumnDef } from "@tanstack/react-table";
-import { FilterIcon } from "lucide-react";
-import { useState } from "react";
-import { MaintenanceRecord } from "../ships/models";
-import ShipImg from "../ships/components/shipImg";
-import { FromCalendar, FromNow } from "@/components/libs/moment";
 import EditTaskDialog from "../maintainance/components/editTaskDialog";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import ShipImg from "../ships/components/shipImg";
+import type { MaintenanceRecord } from "../ships/models";
+import { TaskStatusBadge } from "@/components/app/drillStatusBadge";
 
-export default function DrillsPage() {
+export default function TasksPage() {
   const [filters, setFilters] = useState<{ status?: string }>({});
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [refreshKey, setRefreshkey] = useState(1);
@@ -26,23 +27,25 @@ export default function DrillsPage() {
     setEditModalOpen(true);
   };
 
-  const startTask = (row: MaintenanceRecord) => {
-    
-  }
-
   const columns = [
     {
       accessorKey: "title",
       header: "Task",
       cell: ({ row }) => (
-        <div
+        <button
           onClick={() => handleItemClick(row.original)}
-          className="cursor-pointer"
+          className="max-w-96 cursor-pointer text-left"
         >
-          <div className="text-xs text-muted-foreground">{row.original.type.charAt(0).toUpperCase() + row.original.type.slice(1)}</div>
-          {row.original.title}
-          {row.original.description && <div>{row.original.description}</div>}
-        </div>
+          <span className="block text-xs font-medium capitalize text-muted-foreground">
+            {row.original.type}
+          </span>
+          <span className="block font-medium">{row.original.title}</span>
+          {row.original.description && (
+            <span className="line-clamp-2 block text-xs text-muted-foreground">
+              {row.original.description}
+            </span>
+          )}
+        </button>
       ),
     },
     {
@@ -50,52 +53,32 @@ export default function DrillsPage() {
       cell: ({ row }) => (
         <Link
           href={`/ships/${row.original.ship_id}`}
-          className="flex gap-2 cursor-pointer"
+          className="flex min-w-56 items-center gap-2"
         >
-          <div className="flex items-center gap-1">
-            {row.original.ship_id && (
-              <ShipImg
-                id={row.original.ship_id}
-                className="size-8 border rounded-lg"
-              />
-            )}
-            <div className="flex-1">
-              {row.original.ship?.name}
-              <div className="text-xs text-muted-foreground">
-                {row.original.ship?.type} • {row.original.ship?.imo}
-              </div>
-            </div>
-          </div>
-          <div className="flex-1"></div>
+          {row.original.ship_id && (
+            <ShipImg id={row.original.ship_id} className="size-9 rounded-lg" />
+          )}
+          <span className="min-w-0">
+            <span className="block truncate font-medium">
+              {row.original.ship?.name ?? "Ship"}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {row.original.ship?.type ?? "Vessel"}
+              {row.original.ship?.imo ? ` - IMO ${row.original.ship.imo}` : ""}
+            </span>
+          </span>
         </Link>
       ),
     },
     {
       accessorKey: "dueDate",
       header: "Due",
-      cell: ({ row }) => (
-        <>
-          {row.original.dueDate && <FromCalendar date={row.original.dueDate} />}
-        </>
-      ),
+      cell: ({ row }) => <TaskDueDate task={row.original} />,
     },
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        let color = "gray";
-        if (status === "completed") color = "bg-green-100 text-green-800";
-        else if (status === "in_progress")
-          color = "bg-yellow-100 text-yellow-800";
-        else if (status === "scheduled")
-          color = "bg-orange-100 text-orange-800";
-        return (
-          <span className={`px-2 py-1 text-xs rounded-full ${color}`}>
-            {status.replace("_", " ").toUpperCase()}
-          </span>
-        );
-      },
+      cell: ({ row }) => <TaskStatusBadge task={row.original} />,
     },
   ] as ColumnDef<MaintenanceRecord>[];
 
@@ -104,8 +87,16 @@ export default function DrillsPage() {
   };
 
   return (
-    <div className="container max-w-3xl mx-auto">
-      <h2 className="page-title mb-4">Tasks</h2>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      <div className="flex flex-col gap-3 border-b pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">Crew work</p>
+          <h1 className="text-2xl font-semibold tracking-tight">My tasks</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            Maintenance work assigned to you across vessels.
+          </p>
+        </div>
+      </div>
 
       <PaginationTable
         key={refreshKey}
@@ -113,24 +104,21 @@ export default function DrillsPage() {
         columns={columns}
         filters={filters}
         headerLeft={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <ListTodoIcon className="size-4 text-muted-foreground" />
             <FilterIcon className="size-4 opacity-50" />
             <NativeSelect
               value={filters.status}
-              onChange={(x) =>
-                setFilters({ ...filters, status: x.target.value })
+              onChange={(event) =>
+                setFilters({ ...filters, status: event.target.value })
               }
             >
-              <NativeSelectOption value="">All</NativeSelectOption>
-              <NativeSelectOption value="scheduled">
-                Scheduled
-              </NativeSelectOption>
+              <NativeSelectOption value="">All statuses</NativeSelectOption>
+              <NativeSelectOption value="scheduled">Scheduled</NativeSelectOption>
               <NativeSelectOption value="in_progress">
                 In Progress
               </NativeSelectOption>
-              <NativeSelectOption value="completed">
-                Completed
-              </NativeSelectOption>
+              <NativeSelectOption value="completed">Completed</NativeSelectOption>
             </NativeSelect>
           </div>
         }

@@ -33,6 +33,7 @@ import { DateFormat } from "@/components/libs/moment";
 import CreateDrillDialog from "./createDrillDialog";
 import EditDrillDialog from "./editDrillDialog";
 import DrillAssignmentsSheet from "./drillAssignmentsSheet";
+import { StatusBadge } from "@/components/ui/badge";
 
 export default function DrillsSection({ shipId }: { shipId: string }) {
   const [createOpen, setCreateOpen] = useState(false);
@@ -77,17 +78,6 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
 
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      scheduled: "bg-blue-100 text-blue-800",
-      in_progress: "bg-yellow-100 text-yellow-800",
-      completed: "bg-green-100 text-green-800",
-      missed: "bg-red-100 text-red-800",
-      cancelled: "bg-gray-100 text-gray-800",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
   };
 
   const getTypeLabel = (type: string) => {
@@ -137,13 +127,7 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
-            row.original.status
-          )}`}
-        >
-          {row.original.status.replace("_", " ").toUpperCase()}
-        </span>
+        <StatusBadge status={row.original.status} />
       ),
     },
     {
@@ -191,6 +175,14 @@ export default function DrillsSection({ shipId }: { shipId: string }) {
       <PaginationTable
         key={refreshKey}
         url={`/ships/${shipId}/drills/list`}
+        headerLeft={
+          <div>
+            <h2 className="font-medium">Safety drills</h2>
+            <p className="text-sm text-muted-foreground">
+              Drill schedule, completion state, and assigned participants.
+            </p>
+          </div>
+        }
         actions={
           <Button type="button" onClick={addDrillClicked}>
             Create Drill

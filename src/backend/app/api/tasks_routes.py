@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 from app.infra.data.models.Ship import MaintainanceTask, Ship
 from app.services.paginator import PaginationRequest, Paginator
 from app.infra.auth.users import get_current_user
+from app.infra.auth.role_checker import RoleChecker
 from app.infra.data.models.User import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,26 +21,51 @@ from app.services.event_triggers import EventTriggers
 router = APIRouter()
 
 
+def to_db_datetime(value: datetime | None):
+    if value and value.tzinfo:
+        return value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
+
+
 @router.post("/paginated")
 async def get_paginated_list(
-    req: PaginationRequest[FilterVM], paginator: Paginator = Depends()
+    req: PaginationRequest[FilterVM],
+    paginator: Paginator = Depends(),
+    user: User = Depends(RoleChecker(["admin"])),
 ):
-    query = select(MaintainanceTask)
+    query = select(MaintainanceTask).options(
+        joinedload(MaintainanceTask.ship),
+        joinedload(MaintainanceTask.assigned_to),
+    )
     filters = req.filters
     if req.search:
         query = query.where(MaintainanceTask.title.icontains(req.search))
+
+    if filters and filters.shipId:
+        query = query.where(MaintainanceTask.ship_id == filters.shipId)
 
     if filters and filters.userId:
         query = query.where(MaintainanceTask.assigned_to_id == filters.userId)
 
     if filters and filters.status:
-        query = query.where(MaintainanceTask.status == filters.status)
+        if filters.status == "missed":
+            query = query.where(MaintainanceTask.status != "completed",
+                                MaintainanceTask.due_date < datetime.utcnow())
+        else:
+            query = query.where(MaintainanceTask.status == filters.status)
+
+    if filters and filters.dateFrom:
+        query = query.where(
+            MaintainanceTask.due_date >= to_db_datetime(filters.dateFrom))
+
+    if filters and filters.dateTo:
+        query = query.where(
+            MaintainanceTask.due_date <= to_db_datetime(filters.dateTo))
 
     paged = await paginator.get_paginated(
         req, query.order_by(MaintainanceTask.created_at.desc())
     )
-    for x in paged.data:
-        x.ship
+
     return paged.to_dto(TaskDto)
 
 
@@ -59,6 +85,14 @@ async def get_my_tasks(
 
     if filters and filters.status:
         query = query.where(MaintainanceTask.status == filters.status)
+
+    if filters and filters.dateFrom:
+        query = query.where(
+            MaintainanceTask.due_date >= to_db_datetime(filters.dateFrom))
+
+    if filters and filters.dateTo:
+        query = query.where(
+            MaintainanceTask.due_date <= to_db_datetime(filters.dateTo))
 
     paged = await paginator.get_paginated(
         req, query.order_by(MaintainanceTask.created_at.desc())
@@ -97,8 +131,11 @@ async def update_by_crew(
 
 
 class FilterVM(BaseModel):
+    shipId: UUID | None = None
     userId: UUID | None = None
     status: str | None = None
+    dateFrom: datetime | None = None
+    dateTo: datetime | None = None
 
 
 class TaskDto(BaseModel):
