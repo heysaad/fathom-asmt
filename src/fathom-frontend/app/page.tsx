@@ -9,12 +9,7 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user?.role === "admin") {
       router.push("/dashboard");
-      return;
-    }
-
-    router.push("/dashboard/crew");
   }, [router, user?.role]);
 
   return (
