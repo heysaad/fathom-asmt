@@ -14,15 +14,6 @@ from app.infra.auth.users import get_current_user
 
 log = logging.getLogger("uvicorn")
 
-app = FastAPI(title=settings.app_name, version=settings.version)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allow_origins.split(","),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,6 +22,17 @@ async def lifespan(app: FastAPI):
     run_migrations()
     yield
     log.info("Shutting down...")
+
+
+app = FastAPI(title=settings.app_name, version=settings.version, lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allow_origins.split(","),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/", summary="Root endpoint")
