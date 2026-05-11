@@ -269,7 +269,7 @@ export default function CrewDashboardView() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-lg border bg-card p-4 min-w-0">
           <PaginationTable
             url="/tasks/my-tasks"
             headerLeft={
@@ -288,7 +288,7 @@ export default function CrewDashboardView() {
           />
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-lg border bg-card p-4 min-w-0">
           <PaginationTable
             url="/drills/my-drills"
             headerLeft={

@@ -202,7 +202,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-lg border bg-card p-4 min-w-0">
           <PaginationTable
             url="/tasks/paginated"
             columns={taskColumns}
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-lg border bg-card p-4 min-w-0">
           <PaginationTable
             url="/drills/paginated"
             columns={drillColumns}

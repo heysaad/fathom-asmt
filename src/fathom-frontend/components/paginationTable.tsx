@@ -15,13 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-} from "./ui/pagination";
+import { Pagination, PaginationContent, PaginationItem } from "./ui/pagination";
 import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight, SearchIcon, AlertCircle, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  SearchIcon,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 
 export function PaginationTable<TData, TValue>({
@@ -47,6 +49,7 @@ export function PaginationTable<TData, TValue>({
     hasNext,
     hasPrev,
     currentPage,
+    totalRecords,
     error,
     loading,
     pageSize,
@@ -85,8 +88,8 @@ export function PaginationTable<TData, TValue>({
         </div>
       )}
       {data && (
-        <div className="relative">
-          <div className="flex justify-between gap-6 mb-4">
+        <div className="relative overflow-x-auto w-full">
+          <div className="flex flex-col md:flex-row justify-between gap-6 mb-4">
             <div>{headerLeft}</div>
             <div className="flex gap-3 items-center">
               <InputGroup>
@@ -108,7 +111,12 @@ export function PaginationTable<TData, TValue>({
           <div className="flex items-center justify-between gap-4 mt-4">
             <div className="flex items-center justify-between gap-4">
               <Field orientation="horizontal" className="w-fit">
-                <FieldLabel htmlFor="select-rows-per-page">Per page</FieldLabel>
+                <FieldLabel
+                  htmlFor="select-rows-per-page"
+                  className="max-md:hidden"
+                >
+                  Per page
+                </FieldLabel>
                 <Select
                   value={pageSize.toString()}
                   onValueChange={handleValueChange(setPageSize)}
@@ -128,8 +136,8 @@ export function PaginationTable<TData, TValue>({
                   </SelectContent>
                 </Select>
               </Field>
-              <div className="text-xs text-muted-foreground">
-                {currentPage} of {totalPages} pages
+              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                {totalRecords} records
               </div>
             </div>
             {totalPages > 1 && (
@@ -188,6 +196,7 @@ export function usePagination<T>({
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -230,6 +239,7 @@ export function usePagination<T>({
           return;
         }
 
+        setTotalRecords(data.total);
         setTotalPages(Math.ceil(data.total / pageSize));
         setData(data.data);
       } catch (ex) {
@@ -282,6 +292,8 @@ export function usePagination<T>({
     loading,
     data,
     error,
+    totalRecords,
+    setTotalRecords
   };
 }
 
