@@ -236,7 +236,7 @@ The FastAPI service exposes REST routes for:
 - `/drills` - drill listing, drill management, and crew drill views
 - `/health` - service health check
 
-When running locally, interactive API documentation is available at http://localhost:8000/docs.
+When running locally, interactive API documentation is available at https://fathom-asmt.onrender.com/docs.
 
 ## Deployment
 
