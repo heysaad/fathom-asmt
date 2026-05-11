@@ -9,7 +9,7 @@ Full-stack maritime operations and compliance system for managing ship maintenan
 
 [![Tech Stack](https://skillicons.dev/icons?i=ts,nextjs,react,tailwind,fastapi,python,postgres,docker)](https://skillicons.dev)
 
-[Live Demo](https://fathom-asmt.vercel.app/) | [API Health](http://localhost:8000/health) | [Assessment Scope](docs/scope.md)
+[Live Demo](https://fathom-asmt.vercel.app/) | [API Health](https://fathom-asmt.onrender.com/health) | [Assessment Scope](docs/scope.md)
 
 
 [![CI][ci-shield]][ci-url]
