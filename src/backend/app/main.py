@@ -9,6 +9,7 @@ from app.config import settings
 from fastapi_users.authentication import BearerTransport
 
 from app.infra.data.database import run_migrations
+from app.infra.data.seed import seed_initial_data
 from app.api import auth_routes, user_routes, tasks_routes, ship_drill_assignment_routes
 from app.infra.auth.users import get_current_user
 
@@ -20,6 +21,8 @@ async def lifespan(app: FastAPI):
     log.info("Starting up...")
     log.info("run alembic upgrade head...")
     run_migrations()
+    log.info("seeding initial data...")
+    await seed_initial_data()
     yield
     log.info("Shutting down...")
 
