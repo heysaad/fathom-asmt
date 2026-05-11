@@ -1,9 +1,10 @@
 from datetime import UTC, datetime, timedelta
 
-from fastapi_users.password import PasswordHelper
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.infra.auth.users import UserManager
 from app.infra.data.database import get_async_sessionmaker
 from app.infra.data.models.Ship import (
     Drill,
@@ -13,6 +14,7 @@ from app.infra.data.models.Ship import (
     ShipCrewAssignment,
 )
 from app.infra.data.models.User import User
+from app.schemas.schemas import UserCreate
 
 DEFAULT_PASSWORD = "admin123"
 
@@ -107,23 +109,23 @@ async def _seed_initial_data(session: AsyncSession) -> None:
     if user_count:
         return
 
-    password_helper = PasswordHelper()
-    password_hash = password_helper.hash(DEFAULT_PASSWORD)
+    user_manager = UserManager(SQLAlchemyUserDatabase(session, User))
 
     users_by_email: dict[str, User] = {}
     for item in USERS:
-        user = User(
-            email=item["email"],
-            hashed_password=password_hash,
-            name=item["name"],
-            designation=item["designation"],
-            role=item["role"],
-            is_active=True,
-            is_verified=True,
-            is_superuser=item["role"] == "admin",
+        user = await user_manager.create(
+            UserCreate(
+                email=item["email"],
+                password=DEFAULT_PASSWORD,
+                name=item["name"],
+                designation=item["designation"],
+                role=item["role"],
+                is_active=True,
+                is_verified=True,
+                is_superuser=item["role"] == "admin",
+            ),
+            safe=False,
         )
-        session.add(user)
-        await session.flush()
         users_by_email[item["email"]] = user
 
     admin = users_by_email["admin@fathom.local"]
