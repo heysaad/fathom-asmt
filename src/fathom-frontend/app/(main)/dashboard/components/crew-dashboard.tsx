@@ -20,6 +20,10 @@ import type { DrillAssignment, MaintenanceRecord } from "../../ships/models";
 import { StatusBadge } from "@/components/ui/badge";
 import { DashboardHeader, MetricCard } from "./dashboard-utils";
 import type { PagedResponse } from "./dashboard-utils";
+import {
+  DrillStatusBadge,
+  TaskStatusBadge,
+} from "@/components/app/drillStatusBadge";
 
 type CrewSummary = {
   complianceScore: number;
@@ -120,6 +124,7 @@ export default function CrewDashboardView() {
       header: "Task",
       cell: ({ row }) => (
         <div className="max-w-72">
+          <FromCalendar date={row.original.dueDate} />
           <p className="font-medium">{row.original.title}</p>
           <p className="text-xs capitalize text-muted-foreground">
             {row.original.type}
@@ -135,22 +140,19 @@ export default function CrewDashboardView() {
           className="flex min-w-48 items-center gap-2"
         >
           {row.original.ship_id && (
-            <ShipImg id={row.original.ship_id} className="size-8 rounded-lg border" />
+            <ShipImg
+              id={row.original.ship_id}
+              className="size-8 rounded-lg border"
+            />
           )}
           <span className="truncate">{row.original.ship?.name}</span>
         </Link>
       ),
     },
     {
-      accessorKey: "dueDate",
-      header: "Due",
-      cell: ({ row }) =>
-        row.original.dueDate ? <FromCalendar date={row.original.dueDate} /> : "-",
-    },
-    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <TaskStatusBadge task={row.original} />,
     },
   ] as ColumnDef<MaintenanceRecord>[];
 
@@ -160,6 +162,9 @@ export default function CrewDashboardView() {
       header: "Drill",
       cell: ({ row }) => (
         <div className="max-w-72">
+          {row.original.drill && (
+            <FromCalendar date={row.original.drill.scheduled_at} />
+          )}
           <p className="font-medium">
             {row.original.drill?.title ??
               row.original.drill?.type.replaceAll("_", " ")}
@@ -188,19 +193,15 @@ export default function CrewDashboardView() {
       ),
     },
     {
-      accessorKey: "scheduled_at",
-      header: "Scheduled",
-      cell: ({ row }) =>
-        row.original.drill?.scheduled_at ? (
-          <FromCalendar date={row.original.drill.scheduled_at} />
-        ) : (
-          "-"
-        ),
-    },
-    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.drill?.status} />,
+      cell: ({ row }) => (
+        <>
+          {row.original.drill && (
+            <DrillStatusBadge drill={row.original.drill} />
+          )}
+        </>
+      ),
     },
   ] as ColumnDef<DrillAssignment>[];
 
@@ -244,44 +245,44 @@ export default function CrewDashboardView() {
         />
       </div>
 
-      <div className="rounded-lg border bg-card p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-medium">My open tasks</h2>
-            <p className="text-sm text-muted-foreground">
-              Tasks assigned to you that are still scheduled.
-            </p>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/tasks">All tasks</Link>
-          </Button>
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="rounded-lg border bg-card p-4">
+          <PaginationTable
+            url="/tasks/my-tasks"
+            headerLeft={
+              <div>
+                <h2 className="font-medium mt-2">My open tasks</h2>
+              </div>
+            }
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/tasks">All tasks</Link>
+              </Button>
+            }
+            columns={taskColumns}
+            filters={{ status: "scheduled" }}
+            initialPageSize={5}
+          />
         </div>
-        <PaginationTable
-          url="/tasks/my-tasks"
-          columns={taskColumns}
-          filters={{ status: "scheduled" }}
-          initialPageSize={5}
-        />
-      </div>
 
-      <div className="rounded-lg border bg-card p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-medium">My upcoming drills</h2>
-            <p className="text-sm text-muted-foreground">
-              Scheduled drills where your attendance matters.
-            </p>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/drills">All drills</Link>
-          </Button>
+        <div className="rounded-lg border bg-card p-4">
+          <PaginationTable
+            url="/drills/my-drills"
+            headerLeft={
+              <div>
+                <h2 className="font-medium mt-2">My upcoming drills</h2>
+              </div>
+            }
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/drills">All drills</Link>
+              </Button>
+            }
+            columns={drillColumns}
+            filters={{ status: "scheduled" }}
+            initialPageSize={5}
+          />
         </div>
-        <PaginationTable
-          url="/drills/my-drills"
-          columns={drillColumns}
-          filters={{ status: "scheduled" }}
-          initialPageSize={5}
-        />
       </div>
     </div>
   );

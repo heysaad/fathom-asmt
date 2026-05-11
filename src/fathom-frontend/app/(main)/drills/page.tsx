@@ -18,16 +18,17 @@ import {
 import EditDrillDialog from "../ships/components/editDrillDialog";
 import ShipImg from "../ships/components/shipImg";
 import type { Drill, DrillAssignment } from "../ships/models";
+import { DrillStatusBadge } from "@/components/app/drillStatusBadge";
+import { useRouter } from "next/navigation";
 
 export default function DrillsPage() {
   const [filters, setFilters] = useState<{ status?: string }>({});
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [refreshKey, setRefreshkey] = useState(1);
-  const [selected, setSelected] = useState<Drill>();
+  const router = useRouter()
 
   const handleItemClick = (row: DrillAssignment) => {
-    setSelected(row.drill);
-    setEditModalOpen(true);
+    router.push(`/ships/${row.drill?.ship_id}?tab=drills`)
   };
 
   const markAttendance = async (row: DrillAssignment) => {
@@ -46,7 +47,7 @@ export default function DrillsPage() {
       cell: ({ row }) => (
         <button
           onClick={() => handleItemClick(row.original)}
-          className="max-w-96 cursor-pointer text-left"
+          className="max-w-96 cursor-pointer text-left whitespace-normal"
         >
           <span className="block text-xs font-medium capitalize text-muted-foreground">
             {row.original.drill?.type.replaceAll("_", " ")}
@@ -103,7 +104,13 @@ export default function DrillsPage() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.drill?.status} />,
+      cell: ({ row }) => (
+        <>
+          {row.original.drill && (
+            <DrillStatusBadge drill={row.original.drill} />
+          )}
+        </>
+      ),
     },
     {
       accessorKey: "id",
@@ -161,25 +168,19 @@ export default function DrillsPage() {
               }
             >
               <NativeSelectOption value="">All statuses</NativeSelectOption>
-              <NativeSelectOption value="scheduled">Scheduled</NativeSelectOption>
+              <NativeSelectOption value="scheduled">
+                Scheduled
+              </NativeSelectOption>
               <NativeSelectOption value="in_progress">
                 In Progress
               </NativeSelectOption>
-              <NativeSelectOption value="completed">Completed</NativeSelectOption>
+              <NativeSelectOption value="completed">
+                Completed
+              </NativeSelectOption>
             </NativeSelect>
           </div>
         }
       />
-
-      {selected?.ship_id && (
-        <EditDrillDialog
-          shipId={selected.ship_id}
-          open={editModalOpen}
-          setOpen={setEditModalOpen}
-          data={selected}
-          onSave={reloadData}
-        />
-      )}
     </div>
   );
 }

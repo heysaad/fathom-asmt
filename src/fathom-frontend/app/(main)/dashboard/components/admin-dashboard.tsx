@@ -5,8 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   AlertTriangleIcon,
-  CalendarCheckIcon,
-  ShieldCheckIcon,
   WrenchIcon,
 } from "lucide-react";
 
@@ -19,9 +17,9 @@ import type { Drill, MaintenanceRecord, ShipVM } from "../../ships/models";
 import { StatusBadge } from "@/components/ui/badge";
 import { DashboardHeader, MetricCard } from "./dashboard-utils";
 import type { PagedResponse } from "./dashboard-utils";
+import { DrillStatusBadge, TaskStatusBadge } from "@/components/app/drillStatusBadge";
 
 type AdminSummary = {
-  complianceScore: number;
   openTasks: number;
   overdueTasks: number;
   missedDrills: number;
@@ -29,7 +27,6 @@ type AdminSummary = {
 
 export default function AdminDashboard() {
   const [summary, setSummary] = useState<AdminSummary>({
-    complianceScore: 0,
     openTasks: 0,
     overdueTasks: 0,
     missedDrills: 0,
@@ -38,14 +35,12 @@ export default function AdminDashboard() {
   const loadSummary = useCallback(async () => {
     const now = new Date().toISOString();
     const [
-      shipsResponse,
       scheduledTasks,
       inProgressTasks,
       overdueScheduledTasks,
       overdueInProgressTasks,
       missedDrills,
     ] = await Promise.all([
-      apiClient.get<ShipVM[]>("/ships"),
       apiClient.post<PagedResponse<MaintenanceRecord>>("/tasks/paginated", {
         page: 1,
         pageSize: 1,
@@ -73,17 +68,7 @@ export default function AdminDashboard() {
       }),
     ]);
 
-    const complianceScore = shipsResponse.data.length
-      ? Math.round(
-          shipsResponse.data.reduce(
-            (total, ship) => total + (ship.compliance_score ?? 0),
-            0,
-          ) / shipsResponse.data.length,
-        )
-      : 0;
-
     setSummary({
-      complianceScore,
       openTasks: scheduledTasks.data.total + inProgressTasks.data.total,
       overdueTasks:
         overdueScheduledTasks.data.total + overdueInProgressTasks.data.total,
@@ -101,7 +86,8 @@ export default function AdminDashboard() {
       accessorKey: "title",
       header: "Task",
       cell: ({ row }) => (
-        <div className="max-w-72">
+        <div className="max-w-72 whitespace-normal">
+          {row.original.dueDate && <FromCalendar date={row.original.dueDate} />}
           <p className="font-medium">{row.original.title}</p>
           <p className="text-xs capitalize text-muted-foreground">
             {row.original.type}
@@ -117,9 +103,12 @@ export default function AdminDashboard() {
           className="flex min-w-48 items-center gap-2"
         >
           {row.original.ship_id && (
-            <ShipImg id={row.original.ship_id} className="size-8 rounded-lg border" />
+            <ShipImg
+              id={row.original.ship_id}
+              className="size-8 rounded-lg border"
+            />
           )}
-          <span className="min-w-0">
+          <span className="min-w-0 flex-1 whitespace-normal">
             <span className="block truncate">{row.original.ship?.name}</span>
             <span className="block truncate text-xs text-muted-foreground">
               {row.original.ship?.type}
@@ -129,15 +118,9 @@ export default function AdminDashboard() {
       ),
     },
     {
-      accessorKey: "dueDate",
-      header: "Due",
-      cell: ({ row }) =>
-        row.original.dueDate ? <FromCalendar date={row.original.dueDate} /> : "-",
-    },
-    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <TaskStatusBadge task={row.original} />,
     },
   ] as ColumnDef<MaintenanceRecord>[];
 
@@ -147,6 +130,7 @@ export default function AdminDashboard() {
       header: "Drill",
       cell: ({ row }) => (
         <div className="max-w-72">
+          <FromCalendar date={row.original.scheduled_at} />
           <p className="font-medium">
             {row.original.title ?? row.original.type.replaceAll("_", " ")}
           </p>
@@ -163,8 +147,11 @@ export default function AdminDashboard() {
           href={`/ships/${row.original.ship_id}`}
           className="flex min-w-48 items-center gap-2"
         >
-          <ShipImg id={row.original.ship_id} className="size-8 rounded-lg border" />
-          <span className="min-w-0">
+          <ShipImg
+            id={row.original.ship_id}
+            className="size-8 rounded-lg border"
+          />
+          <span className="min-w-0 flex-1">
             <span className="block truncate">{row.original.ship?.name}</span>
             <span className="block truncate text-xs text-muted-foreground">
               {row.original.ship?.type}
@@ -174,14 +161,9 @@ export default function AdminDashboard() {
       ),
     },
     {
-      accessorKey: "scheduled_at",
-      header: "Scheduled",
-      cell: ({ row }) => <FromCalendar date={row.original.scheduled_at} />,
-    },
-    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <DrillStatusBadge drill={row.original} />,
     },
   ] as ColumnDef<Drill>[];
 
@@ -189,20 +171,13 @@ export default function AdminDashboard() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <DashboardHeader
         eyebrow="Admin dashboard"
-        title="Fleet overview"
+        title="Dashboard"
         description="A quick look at fleet workload and safety follow-up."
         actionHref="/admin/tasks"
         actionLabel="View all tasks"
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          title="Compliance score"
-          value={`${summary.complianceScore}%`}
-          helper="Average across ships"
-          icon={<ShieldCheckIcon className="size-5" />}
-          tone={summary.complianceScore >= 80 ? "green" : "amber"}
-        />
         <MetricCard
           title="Open tasks"
           value={summary.openTasks}
@@ -226,50 +201,50 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <div className="rounded-lg border bg-card p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-medium">Open maintenance</h2>
-            <p className="text-sm text-muted-foreground">
-              Use operations for deeper filtering and editing.
-            </p>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/tasks">All tasks</Link>
-          </Button>
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="rounded-lg border bg-card p-4">
+          <PaginationTable
+            url="/tasks/paginated"
+            columns={taskColumns}
+            filters={{ status: "scheduled" }}
+            headerLeft={
+              <div>
+                <h2 className="font-medium">Open tasks</h2>
+                <p className="text-sm text-muted-foreground">
+                  Maintainance tasks
+                </p>
+              </div>
+            }
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/admin/tasks">All tasks</Link>
+              </Button>
+            }
+            initialPageSize={5}
+          />
         </div>
-        <PaginationTable
-          url="/tasks/paginated"
-          columns={taskColumns}
-          filters={{ status: "scheduled" }}
-          initialPageSize={5}
-        />
-      </div>
 
-      <div className="rounded-lg border bg-card p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-medium">Scheduled drills</h2>
-            <p className="text-sm text-muted-foreground">
-              The next drill records across the fleet.
-            </p>
-          </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/drills">All drills</Link>
-          </Button>
+        <div className="rounded-lg border bg-card p-4">
+          <PaginationTable
+            url="/drills/paginated"
+            columns={drillColumns}
+            filters={{ status: "scheduled" }}
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link href="/admin/drills">All drills</Link>
+              </Button>
+            }
+            initialPageSize={5}
+            headerLeft={
+              <div>
+                <h2 className="font-medium">Scheduled drills</h2>
+                <p className="text-sm text-muted-foreground">
+                  The next drill records.
+                </p>
+              </div>
+            }
+          />
         </div>
-        <PaginationTable
-          url="/drills/paginated"
-          columns={drillColumns}
-          filters={{ status: "scheduled" }}
-          initialPageSize={5}
-          headerLeft={
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarCheckIcon className="size-4" />
-              Scheduled
-            </div>
-          }
-        />
       </div>
     </div>
   );

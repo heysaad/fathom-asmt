@@ -92,16 +92,22 @@ async def get_paginated_drills_route(
     filters = []
 
     if req.filters and req.filters.status:
-        filters.append(Drill.status == req.filters.status)
+        if req.filters.status == "missed":
+            filters.append(Drill.status == "scheduled")
+            filters.append(Drill.scheduled_at < datetime.utcnow())
+        else:
+            filters.append(Drill.status == req.filters.status)
 
     if req.filters and req.filters.drill_type:
         filters.append(Drill.type == req.filters.drill_type)
 
     if req.filters and req.filters.dateFrom:
-        filters.append(Drill.scheduled_at >= to_db_datetime(req.filters.dateFrom))
+        filters.append(Drill.scheduled_at >=
+                       to_db_datetime(req.filters.dateFrom))
 
     if req.filters and req.filters.dateTo:
-        filters.append(Drill.scheduled_at <= to_db_datetime(req.filters.dateTo))
+        filters.append(Drill.scheduled_at <=
+                       to_db_datetime(req.filters.dateTo))
 
     query = select(Drill).options(joinedload(Drill.ship))
 
@@ -137,17 +143,19 @@ async def get_my_drills_route(
         filters.append(Drill.type == req.filters.drill_type)
 
     if req.filters and req.filters.dateFrom:
-        filters.append(Drill.scheduled_at >= to_db_datetime(req.filters.dateFrom))
+        filters.append(Drill.scheduled_at >=
+                       to_db_datetime(req.filters.dateFrom))
 
     if req.filters and req.filters.dateTo:
-        filters.append(Drill.scheduled_at <= to_db_datetime(req.filters.dateTo))
+        filters.append(Drill.scheduled_at <=
+                       to_db_datetime(req.filters.dateTo))
 
     query = select(DrillAssignment)\
         .join(DrillAssignment.drill)\
         .options(
             contains_eager(DrillAssignment.drill)
             .joinedload(Drill.ship)
-        )\
+    )\
         .where(
             DrillAssignment.ship_crew_assignment.has(
                 user.id == ShipCrewAssignment.crew_member_id))\
@@ -177,10 +185,12 @@ async def get_my_drills_route(
         filters.append(Drill.type == req.filters.drill_type)
 
     if req.filters and req.filters.dateFrom:
-        filters.append(Drill.scheduled_at >= to_db_datetime(req.filters.dateFrom))
+        filters.append(Drill.scheduled_at >=
+                       to_db_datetime(req.filters.dateFrom))
 
     if req.filters and req.filters.dateTo:
-        filters.append(Drill.scheduled_at <= to_db_datetime(req.filters.dateTo))
+        filters.append(Drill.scheduled_at <=
+                       to_db_datetime(req.filters.dateTo))
 
     query = select(Drill).where(
         and_(*filters)).order_by(Drill.scheduled_at.desc())

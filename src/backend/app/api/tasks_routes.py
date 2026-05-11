@@ -45,7 +45,11 @@ async def get_paginated_list(
         query = query.where(MaintainanceTask.assigned_to_id == filters.userId)
 
     if filters and filters.status:
-        query = query.where(MaintainanceTask.status == filters.status)
+        if filters.status == "missed":
+            query = query.where(MaintainanceTask.status != "completed",
+                                MaintainanceTask.due_date < datetime.utcnow())
+        else:
+            query = query.where(MaintainanceTask.status == filters.status)
 
     if filters and filters.dateFrom:
         query = query.where(
@@ -58,8 +62,7 @@ async def get_paginated_list(
     paged = await paginator.get_paginated(
         req, query.order_by(MaintainanceTask.created_at.desc())
     )
-    for x in paged.data:
-        x.ship
+
     return paged.to_dto(TaskDto)
 
 

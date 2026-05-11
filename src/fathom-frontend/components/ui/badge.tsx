@@ -38,7 +38,7 @@ export function getStatusTone(status?: string): BadgeTone {
   if (status === "completed" || status === "active") return "green";
   if (status === "in_progress") return "blue";
   if (status === "inactive") return "slate";
-  if (status === "missed" || status === "cancelled") {
+  if (status === "missed" || status === "cancelled" || status == "overdue") {
     return "red";
   }
   return "amber";

@@ -15,6 +15,7 @@ import {
 import EditTaskDialog from "../maintainance/components/editTaskDialog";
 import ShipImg from "../ships/components/shipImg";
 import type { MaintenanceRecord } from "../ships/models";
+import { TaskStatusBadge } from "@/components/app/drillStatusBadge";
 
 export default function TasksPage() {
   const [filters, setFilters] = useState<{ status?: string }>({});
@@ -79,7 +80,7 @@ export default function TasksPage() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <TaskStatusBadge task={row.original} />,
     },
   ] as ColumnDef<MaintenanceRecord>[];
 
