@@ -33,11 +33,9 @@ export default function CreateMaintainanceTaskDialog({
   const modelSchema = z.object({
     title: z.string().min(1, "Title is required"),
     type: z
-      .enum(["routine", "repair", "inspection", "upgrade"], 'Invalid value')
-      .default("routine"),
+      .enum(["routine", "repair", "inspection", "upgrade"], 'Invalid value'),
     dueDate: z
-      .iso.date('Invalid date')
-      .default(() => moment(new Date()).add(3, 'd').format('YYYY-MM-DD')),
+      .iso.date('Invalid date'),
     assignedToId: z.guid('Please select user')
   });
   type modelType = z.infer<typeof modelSchema>;
@@ -50,7 +48,13 @@ export default function CreateMaintainanceTaskDialog({
     reset,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<modelType>({ resolver: zodResolver(modelSchema) });
+  } = useForm<modelType>({
+    resolver: zodResolver(modelSchema),
+    defaultValues: {
+      type: "routine",
+      dueDate: moment(new Date()).add(3, 'd').format('YYYY-MM-DD'),
+    },
+  });
 
   useEffect(() => {
     if (open && shipId) {
@@ -105,7 +109,7 @@ export default function CreateMaintainanceTaskDialog({
             </Field>
             <Field>
               <FieldLabel>Assigned To</FieldLabel>
-              <UserInput onValueChange={x => setValue("assignedToId", x)} />
+              <UserInput onValueChange={x => setValue("assignedToId", x ?? "")} />
               {errors.assignedToId && (<FieldError errors={[errors.assignedToId]} />)}
             </Field>
             <Field>

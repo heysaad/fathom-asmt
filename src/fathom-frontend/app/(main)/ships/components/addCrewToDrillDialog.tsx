@@ -11,16 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { ShipCrewAssignment } from "../models";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { UserInput } from "@/components/user-input";
 
 interface AddCrewToDrillDialogProps {
@@ -38,10 +30,8 @@ export default function AddCrewToDrillDialog({
   shipId,
   drillId,
 }: AddCrewToDrillDialogProps) {
-  const [crewMembers, setCrewMembers] = useState<ShipCrewAssignment[]>([]);
-  const [selectedCrewId, setSelectedCrewId] = useState<string>("");
+  const [selectedCrewId, setSelectedCrewId] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [loadingCrew, setLoadingCrew] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,20 +73,20 @@ export default function AddCrewToDrillDialog({
         <form onSubmit={onSubmit} className="space-y-3">
           <Field>
             <FieldLabel>Select Crew Member</FieldLabel>
-            <UserInput value={selectedCrewId} onValueChange={setSelectedCrewId} />
+            <UserInput value={selectedCrewId} onValueChange={(value) => setSelectedCrewId(value || undefined)} />
           </Field>
 
           <DialogFooter>
             <Button
               variant="secondary"
               onClick={() => onOpenChange(false)}
-              disabled={loading || loadingCrew}
+              disabled={loading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={!selectedCrewId || loading || loadingCrew}
+              disabled={!selectedCrewId || loading}
             >
               {loading ? "Assigning..." : "Assign"}
             </Button>

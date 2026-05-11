@@ -60,7 +60,7 @@ export default function DrillAssignmentsSheet({
   const [showDelete, setShowDelete] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<DrillAssignment | undefined>();
-  const [selectedCrewId, setSelectedCrewId] = useState("");
+  const [selectedCrewId, setSelectedCrewId] = useState<string>();
   const [assigning, setAssigning] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -223,7 +223,7 @@ export default function DrillAssignmentsSheet({
                 <p className="mb-2 text-sm font-medium">Add crew member</p>
                 <UserInput
                   value={selectedCrewId}
-                  onValueChange={setSelectedCrewId}
+                  onValueChange={(value) => setSelectedCrewId(value)}
                 />
               </div>
               <Button

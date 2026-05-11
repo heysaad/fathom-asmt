@@ -28,7 +28,7 @@ export default function CreateCrewDialog({
   onSuccess,
   shipId,
 }: CreateCrewDialogProps) {
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserId, setSelectedUserId] = useState<string>();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -73,7 +73,7 @@ export default function CreateCrewDialog({
             <FieldLabel>Select Crew Member</FieldLabel>
             <UserInput
               value={selectedUserId}
-              onValueChange={setSelectedUserId}
+              onValueChange={(value) => setSelectedUserId(value)}
               placeholder="Select a crew member"
             />
           </Field>

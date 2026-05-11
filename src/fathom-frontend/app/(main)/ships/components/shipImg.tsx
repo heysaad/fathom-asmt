@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ImageProps } from "next/image";
 
 export default function ShipImg({
   id,
@@ -7,9 +8,9 @@ export default function ShipImg({
   ...props
 }: {
   id: string;
-  width: number;
-  height: number;
-} & React.ImgHTMLAttributes<HTMLImageElement>) {
+  width?: number;
+  height?: number;
+} & Omit<ImageProps, "src" | "alt" | "width" | "height">) {
   const firstChar = id[0].toLowerCase();
   const map = {
     "ship1.png": ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"],
