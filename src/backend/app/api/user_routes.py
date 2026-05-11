@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 import uuid
 
@@ -116,7 +116,7 @@ async def get_user_route(user_id: uuid.UUID, db: AsyncSession = Depends(get_db))
         select(func.count(MaintainanceTask.id)).where(
             MaintainanceTask.assigned_to_id == user.id,
             MaintainanceTask.status != "completed",
-            MaintainanceTask.due_date < datetime.utcnow(),
+            MaintainanceTask.due_date < datetime.now(UTC),
         )
     )
     drills_created = await db.scalar(

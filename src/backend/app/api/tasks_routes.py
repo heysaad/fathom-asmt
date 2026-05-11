@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -50,7 +50,7 @@ async def get_paginated_list(
     if filters and filters.status:
         if filters.status == "missed":
             query = query.where(MaintainanceTask.status != "completed",
-                                MaintainanceTask.due_date < datetime.utcnow())
+                                MaintainanceTask.due_date < datetime.now(UTC))
         else:
             query = query.where(MaintainanceTask.status == filters.status)
 
@@ -116,7 +116,7 @@ async def update_by_crew(
             status_code=403, detail="You don't have rights to update")
 
     if req.status == "completed" and task.status != req.status:
-        task.completed_on = datetime.utcnow()
+        task.completed_on = datetime.now(UTC)
 
     task.status = req.status
 

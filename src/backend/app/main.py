@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
 
-from alembic import command
 
 from app.api import ship_routes, ship_crew_routes, drills_routes
 from fastapi import Depends, FastAPI
@@ -11,7 +10,6 @@ from fastapi_users.authentication import BearerTransport
 
 from app.infra.data.database import run_migrations
 from app.api import auth_routes, user_routes, tasks_routes, ship_drill_assignment_routes
-from app.infra.auth.role_checker import RoleChecker
 from app.infra.auth.users import get_current_user
 
 log = logging.getLogger("uvicorn")

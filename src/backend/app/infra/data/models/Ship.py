@@ -2,7 +2,7 @@ from app.infra.data.base import Base
 from sqlalchemy import Boolean, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import List, TYPE_CHECKING
 from uuid import uuid4
 
@@ -19,7 +19,7 @@ class Ship(Base):
     type: Mapped[str] = mapped_column(nullable=False)
     imo: Mapped[str] = mapped_column(nullable=True)
     description: Mapped[str] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
 
     # compliance
     compliance_score: Mapped[int] = mapped_column(Integer, nullable=True)
@@ -46,7 +46,7 @@ class ShipCrewAssignment(Base):
     crew_member_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=False
     )
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=True, default=True)
 
@@ -83,7 +83,7 @@ class MaintainanceTask(Base):
     status: Mapped[str] = mapped_column(default="scheduled")
     due_date: Mapped[datetime] = mapped_column(nullable=True)
     completed_on: Mapped[datetime] = mapped_column(nullable=True)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
     assigned_to_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=True
     )
@@ -115,7 +115,7 @@ class Drill(Base):
     created_by: Mapped[str] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=True
     )
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
 
     # Relationships
     ship: Mapped["Ship"] = relationship(back_populates="drills", lazy="noload")
@@ -137,7 +137,7 @@ class DrillAssignment(Base):
     ship_crew_assignment_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ship_crew_assignments.id"), nullable=False
     )
-    assigned_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    assigned_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC))
     is_attended: Mapped[bool] = mapped_column(Boolean, default=False)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False)
     attended_at: Mapped[datetime] = mapped_column(nullable=True)

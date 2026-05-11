@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select, and_
 from sqlalchemy.orm import contains_eager, joinedload
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from app.infra.data.database import get_db
 from app.infra.data.models.Ship import Drill, DrillAssignment, ShipCrewAssignment
@@ -98,7 +98,7 @@ async def get_paginated_drills_route(
     if req.filters and req.filters.status:
         if req.filters.status == "missed":
             filters.append(Drill.status == "scheduled")
-            filters.append(Drill.scheduled_at < datetime.utcnow())
+            filters.append(Drill.scheduled_at < datetime.now(UTC))
         else:
             filters.append(Drill.status == req.filters.status)
 
@@ -255,7 +255,7 @@ async def update_drill_route(
         drill.status = payload.status
         completed = drill.status == "completed"
         if completed:
-            drill.completed_at = datetime.utcnow()
+            drill.completed_at = datetime.now(UTC)
 
     if payload.started_at is not None:
         drill.started_at = payload.started_at

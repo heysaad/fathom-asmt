@@ -1,0 +1,50 @@
+services:
+  frontend:
+    build:
+      context: ./src/fathom-frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: fathom-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ./src/backend
+    container_name: fathom-api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:admin123@postgres:5432/fathom_db
+      ALLOW_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: fathom-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: fathom_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fathom_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

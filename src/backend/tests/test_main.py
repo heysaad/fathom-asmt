@@ -7,12 +7,12 @@ def test_root_returns_message() -> None:
     response = client.get("/")
 
     assert response.status_code == 200
-    assert response.json() == {"message": "Fathom ASMT API is running"}
+    assert response.json() == {"app": "Fathom Assessment API", "version": "0.1.0"}
 
 
-def test_ping_returns_pong() -> None:
+def test_health_returns_healthy() -> None:
     client = TestClient(app)
-    response = client.get("/ping")
+    response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "pong"}
+    assert response.json() == {"status": "Healthy"}

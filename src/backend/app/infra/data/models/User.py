@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, List
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
@@ -15,7 +15,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     name: Mapped[str | None] = mapped_column(nullable=True)
     designation: Mapped[str | None] = mapped_column(nullable=True)
     role: Mapped[str] = mapped_column(nullable=False, server_default="crew")
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now(UTC), nullable=True)
 
     # Relationships
     crew_assignments: Mapped[List["ShipCrewAssignment"]] = relationship(

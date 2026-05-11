@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infra.data.models.Ship import Drill, MaintainanceTask
-from app.infra.data.database import async_session
+from app.infra.data.database import get_async_sessionmaker
 from app.services.compliance_service import ComplianceService
 
 
@@ -36,6 +36,7 @@ class EventTriggers:
 
     async def _run_in_background(self, handler: Callable[..., Awaitable[None]], *args):
         try:
+            async_session = get_async_sessionmaker()
             async with async_session() as session:
                 compliance = ComplianceService(session)
                 worker = EventTriggerWorker(session, compliance)
