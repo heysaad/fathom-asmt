@@ -3,28 +3,37 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CalendarCheckIcon, CheckIcon, FilterIcon } from "lucide-react";
-import { toast } from "sonner";
+import { AlertTriangleIcon, CalendarCheckIcon, CheckIcon, FilterIcon } from "lucide-react";
 
-import apiClient from "@/app/lib/api-client";
 import { FromCalendar } from "@/components/libs/moment";
 import { PaginationTable } from "@/components/paginationTable";
-import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import EditDrillDialog from "../ships/components/editDrillDialog";
 import ShipImg from "../ships/components/shipImg";
-import type { Drill, DrillAssignment } from "../ships/models";
+import type { DrillAssignment } from "../ships/models";
 import { DrillStatusBadge } from "@/components/app/drillStatusBadge";
 import { useRouter } from "next/navigation";
+import { AttendanceDialog } from "./_components/attendanceDialog";
+import {
+  type AdminOperationFilters,
+  dateInputValue,
+  endOfDayFilter,
+  startOfDayFilter,
+} from "../admin/components/admin-operation-filters";
+import { ShipFilter } from "../admin/components/ship-filter";
 
 export default function DrillsPage() {
-  const [filters, setFilters] = useState<{ status?: string }>({ status: "open" });
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [filters, setFilters] = useState<AdminOperationFilters>({ status: "open" });
   const [refreshKey, setRefreshkey] = useState(1);
+  const [attendanceTarget, setAttendanceTarget] = useState<{
+    shipId: string;
+    drillId: string;
+  } | null>(null);
+  const [attendanceOpen, setAttendanceOpen] = useState(false);
   const router = useRouter()
 
   const handleItemClick = (row: DrillAssignment) => {
@@ -32,12 +41,9 @@ export default function DrillsPage() {
   };
 
   const markAttendance = async (row: DrillAssignment) => {
-    await apiClient.put(
-      `/ships/${row.drill!.ship_id}/drills/${row.drill_id}/assignments/${row.id}`,
-      { is_attended: true },
-    );
-    reloadData();
-    toast.success("Your attendance has been marked");
+    if (!row.drill?.ship_id) return;
+    setAttendanceTarget({ shipId: row.drill.ship_id, drillId: row.drill_id });
+    setAttendanceOpen(true);
   };
 
   const columns = [
@@ -107,7 +113,7 @@ export default function DrillsPage() {
       cell: ({ row }) => (
         <>
           {row.original.drill && (
-            <DrillStatusBadge drill={row.original.drill} />
+            <DrillStatusBadge drill={row.original.drill} attended={row.original.is_attended} />
           )}
         </>
       ),
@@ -124,9 +130,15 @@ export default function DrillsPage() {
               </Button>
             )}
           {row.original.is_attended && (
-            <div className="flex items-center gap-1 text-sm text-emerald-600">
+            <div className="flex items-center gap-1 text-sm text-green-500">
               <CheckIcon className="size-4" />
               Attended
+            </div>
+          )}
+          {row.original.drill?.status == "completed" && !row.original.is_attended && (
+            <div className="flex items-center gap-1 text-sm text-red-500">
+              <AlertTriangleIcon className="size-4" />
+              Missed
             </div>
           )}
         </div>
@@ -161,6 +173,10 @@ export default function DrillsPage() {
           <div className="flex flex-wrap items-center gap-3">
             <CalendarCheckIcon className="size-4 text-muted-foreground" />
             <FilterIcon className="size-4 opacity-50" />
+            <ShipFilter
+              value={filters.shipId}
+              onValueChange={(shipId) => setFilters({ ...filters, shipId })}
+            />
             <NativeSelect
               value={filters.status}
               onChange={(event) =>
@@ -181,8 +197,46 @@ export default function DrillsPage() {
                 Completed
               </NativeSelectOption>
             </NativeSelect>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              From
+              <Input
+                aria-label="Drill scheduled date from"
+                className="w-36"
+                type="date"
+                value={dateInputValue(filters.dateFrom)}
+                onChange={(event) =>
+                  setFilters({
+                    ...filters,
+                    dateFrom: startOfDayFilter(event.target.value),
+                  })
+                }
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              To
+              <Input
+                aria-label="Drill scheduled date to"
+                className="w-36"
+                type="date"
+                value={dateInputValue(filters.dateTo)}
+                onChange={(event) =>
+                  setFilters({
+                    ...filters,
+                    dateTo: endOfDayFilter(event.target.value),
+                  })
+                }
+              />
+            </label>
           </div>
         }
+      />
+
+      <AttendanceDialog
+        shipId={attendanceTarget?.shipId}
+        drillId={attendanceTarget?.drillId}
+        open={attendanceOpen}
+        setOpen={setAttendanceOpen}
+        onMarked={reloadData}
       />
     </div>
   );

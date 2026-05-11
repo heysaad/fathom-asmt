@@ -174,7 +174,7 @@ export default function CrewDashboardView() {
       accessorKey: "title",
       header: "Drill",
       cell: ({ row }) => (
-        <div className="max-w-72">
+        <Link href={"/drills"} className="max-w-72">
           <p className="font-medium">
             {row.original.drill?.title ??
               row.original.drill?.type.replaceAll("_", " ")}
@@ -187,9 +187,15 @@ export default function CrewDashboardView() {
                 {" "}
                 • {row.original.drill?.type.replaceAll("_", " ")}
               </span>
+              {row.original.is_attended && (
+                <>
+                  {" "}
+                  • <span className="text-green-500">Attended</span>
+                </>
+              )}
             </div>
           )}
-        </div>
+        </Link>
       ),
     },
     {

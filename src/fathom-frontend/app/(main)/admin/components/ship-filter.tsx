@@ -15,7 +15,7 @@ export function ShipFilter({
   onValueChange,
 }: {
   value?: string;
-  onValueChange: (value: string) => void;
+  onValueChange: (value?: string) => void;
 }) {
   const [ships, setShips] = useState<ShipVM[]>([]);
 
@@ -43,7 +43,7 @@ export function ShipFilter({
     <NativeSelect
       aria-label="Filter by ship"
       value={value}
-      onChange={(event) => onValueChange(event.target.value)}
+      onChange={(event) => onValueChange(event.target.value || undefined)}
     >
       <NativeSelectOption value="">All ships</NativeSelectOption>
       {ships.map((ship) => (

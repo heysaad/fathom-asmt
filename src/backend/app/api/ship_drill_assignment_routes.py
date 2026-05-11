@@ -3,17 +3,19 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select, and_
-from sqlalchemy.orm import contains_eager, joinedload
+from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.api.user_routes import UserDto
 from app.infra.data.models.Ship import Drill, DrillAssignment, ShipCrewAssignment
+from app.infra.data.models.User import User
+from app.infra.auth.users import get_current_user
 from app.services.paginator import PaginationRequest, PaginationResponse, Paginator
 from app.infra.data.database import get_db
 from app.schemas.common import DrillDto
 from app.api.ship_crew_routes import ShipCrewDto
 from app.services.event_triggers import EventTriggers
+from app.utils.datetime import utc_now
 
 router = APIRouter()
 
@@ -43,8 +45,39 @@ class UpdateDrillAssignmentDto(BaseModel):
     remarks: str | None = None
 
 
+class MarkMyAttendanceDto(BaseModel):
+    remarks: str | None = None
+
+
 class AssignmentFilterVM(BaseModel):
     is_attended: bool
+
+
+async def get_my_drill_assignment(
+    ship_id: UUID,
+    drill_id: UUID,
+    user_id: UUID,
+    db: AsyncSession,
+) -> DrillAssignment | None:
+    return await db.scalar(
+        select(DrillAssignment)
+        .join(DrillAssignment.drill)
+        .join(DrillAssignment.ship_crew_assignment)
+        .options(
+            joinedload(DrillAssignment.drill).joinedload(Drill.ship),
+            joinedload(DrillAssignment.ship_crew_assignment).joinedload(
+                ShipCrewAssignment.crew_member
+            ),
+        )
+        .where(
+            and_(
+                Drill.id == drill_id,
+                Drill.ship_id == ship_id,
+                ShipCrewAssignment.crew_member_id == user_id,
+                ShipCrewAssignment.is_active == True,
+            )
+        )
+    )
 
 
 @router.post(
@@ -155,6 +188,65 @@ async def get_drill_assignments_route(
     paginator = Paginator(db)
     result = await paginator.get_paginated(req, query)
     return result.to_dto(DrillAssignmentDto)
+
+
+@router.get(
+    "/{ship_id}/drills/{drill_id}/assignments/me",
+    summary="Get my drill assignment",
+    response_model=DrillAssignmentDto,
+)
+async def get_my_drill_assignment_route(
+    ship_id: UUID,
+    drill_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Get the current user's assignment for a drill."""
+
+    assignment = await get_my_drill_assignment(ship_id, drill_id, user.id, db)
+
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found"
+        )
+
+    return DrillAssignmentDto.model_validate(assignment)
+
+
+@router.put(
+    "/{ship_id}/drills/{drill_id}/assignments/me/attendance",
+    summary="Mark my drill attendance",
+    response_model=DrillAssignmentDto,
+)
+async def mark_my_drill_attendance_route(
+    ship_id: UUID,
+    drill_id: UUID,
+    payload: MarkMyAttendanceDto,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+    triggers: EventTriggers = Depends(EventTriggers),
+):
+    """Mark attendance for the current user's drill assignment."""
+
+    assignment = await get_my_drill_assignment(ship_id, drill_id, user.id, db)
+
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found"
+        )
+
+    assignment.is_attended = True
+    assignment.attended_at = assignment.attended_at or utc_now()
+
+    if payload.remarks is not None:
+        assignment.remarks = payload.remarks
+
+    await db.commit()
+    await db.refresh(assignment)
+
+    await triggers.on_drill_done(drill_id)
+
+    return DrillAssignmentDto.model_validate(assignment)
 
 
 @router.put(

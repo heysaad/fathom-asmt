@@ -3,13 +3,21 @@ import { StatusBadge } from "../ui/badge";
 import moment from "moment";
 import { isTaskOverdue } from "./taskDueDate";
 
-export function DrillStatusBadge({ drill }: { drill: Drill }) {
+export function DrillStatusBadge({
+  drill,
+  attended,
+}: {
+  drill: Drill;
+  attended?: boolean;
+}) {
   let status = drill.status as string;
   if (
     drill.status == "scheduled" &&
     moment(drill.scheduled_at) < moment(new Date())
   )
     status = "overdue";
+
+  if (drill.status == "completed" && attended == false) status = "missed";
   return <StatusBadge status={status} />;
 }
 

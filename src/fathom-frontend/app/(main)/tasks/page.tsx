@@ -7,6 +7,7 @@ import { FilterIcon, ListTodoIcon } from "lucide-react";
 
 import { TaskDueDate } from "@/components/app/taskDueDate";
 import { PaginationTable } from "@/components/paginationTable";
+import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -17,6 +18,13 @@ import type { MaintenanceRecord } from "../ships/models";
 import { TaskStatusBadge } from "@/components/app/drillStatusBadge";
 import { useUser } from "@/app/lib/user-context";
 import { canEditTask } from "@/app/lib/permissions";
+import {
+  type AdminOperationFilters,
+  dateInputValue,
+  endOfDayFilter,
+  startOfDayFilter,
+} from "../admin/components/admin-operation-filters";
+import { ShipFilter } from "../admin/components/ship-filter";
 
 export function TaskCell({
   task,
@@ -63,7 +71,7 @@ export function TaskCell({
 }
 
 export default function TasksPage() {
-  const [filters, setFilters] = useState<{ status?: string }>({ status: "open" });
+  const [filters, setFilters] = useState<AdminOperationFilters>({ status: "open" });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [refreshKey, setRefreshkey] = useState(1);
   const [selectedTask, setSelectedTask] = useState<MaintenanceRecord>();
@@ -139,6 +147,10 @@ export default function TasksPage() {
           <div className="flex flex-wrap items-center gap-3">
             <ListTodoIcon className="size-4 text-muted-foreground" />
             <FilterIcon className="size-4 opacity-50" />
+            <ShipFilter
+              value={filters.shipId}
+              onValueChange={(shipId) => setFilters({ ...filters, shipId })}
+            />
             <NativeSelect
               value={filters.status}
               onChange={(event) =>
@@ -159,6 +171,36 @@ export default function TasksPage() {
                 Completed
               </NativeSelectOption>
             </NativeSelect>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              From
+              <Input
+                aria-label="Task due date from"
+                className="w-36"
+                type="date"
+                value={dateInputValue(filters.dateFrom)}
+                onChange={(event) =>
+                  setFilters({
+                    ...filters,
+                    dateFrom: startOfDayFilter(event.target.value),
+                  })
+                }
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              To
+              <Input
+                aria-label="Task due date to"
+                className="w-36"
+                type="date"
+                value={dateInputValue(filters.dateTo)}
+                onChange={(event) =>
+                  setFilters({
+                    ...filters,
+                    dateTo: endOfDayFilter(event.target.value),
+                  })
+                }
+              />
+            </label>
           </div>
         }
       />

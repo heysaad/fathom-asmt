@@ -84,6 +84,9 @@ async def get_my_tasks(
     if req.search:
         query = query.where(MaintainanceTask.title.icontains(req.search))
 
+    if filters and filters.shipId:
+        query = query.where(MaintainanceTask.ship_id == filters.shipId)
+
     if filters and filters.status:
         if filters.status == "open":
             query = query.where(or_(MaintainanceTask.status == "scheduled", MaintainanceTask.status == "in_progress"))

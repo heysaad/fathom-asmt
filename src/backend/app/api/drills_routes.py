@@ -141,6 +141,9 @@ async def get_my_drills_route(
 
     filters = []
 
+    if req.filters and req.filters.shipId:
+        filters.append(Drill.ship_id == req.filters.shipId)
+
     if req.filters and req.filters.status:
         if req.filters.status == "open":
             filters.append(or_(Drill.status == "scheduled",
