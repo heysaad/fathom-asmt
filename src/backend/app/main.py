@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 import logging
 
 
@@ -20,7 +21,7 @@ log = logging.getLogger("uvicorn")
 async def lifespan(app: FastAPI):
     log.info("Starting up...")
     log.info("run alembic upgrade head...")
-    run_migrations()
+    await asyncio.to_thread(run_migrations)
     log.info("seeding initial data...")
     await seed_initial_data()
     yield
