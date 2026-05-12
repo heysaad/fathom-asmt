@@ -53,6 +53,9 @@ The application supports admin workflows for managing ships, users, tasks, drill
 - Docker Compose setup for frontend, API, and PostgreSQL
 - CI checks for backend tests, frontend build, and Docker image builds
 
+Business flow is documented separately in [docs/business-flow.md](docs/business-flow.md).
+
+
 ## Built With
 
 [![Tech Stack](https://skillicons.dev/icons?i=ts,nextjs,react,tailwind,fastapi,python,postgres,docker)](https://skillicons.dev)
