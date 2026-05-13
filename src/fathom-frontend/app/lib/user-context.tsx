@@ -26,7 +26,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     const token = localStorage.getItem("access_token");
-    if (!token) return;
+    if (!token) {
+      setUser(undefined);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
